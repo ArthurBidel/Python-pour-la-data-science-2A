@@ -1,0 +1,37 @@
+import os
+import pandas as pd
+
+# Dossier principal contenant les sous-dossiers
+dossier_principal = "/chemin/vers/ton/dossier_principal"
+
+# Dictionnaire pour stocker les DataFrames de chaque sous-dossier
+tables_par_sous_dossier = {}
+
+# Parcourir chaque sous-dossier dans le dossier principal
+for sous_dossier in os.listdir(dossier_principal):
+    chemin_sous_dossier = os.path.join(dossier_principal, sous_dossier)
+    
+    # Vérifie que c'est bien un dossier
+    if os.path.isdir(chemin_sous_dossier):
+        # Liste pour stocker les DataFrames de chaque CSV dans le sous-dossier
+        df_list = []
+        
+        # Parcourir chaque fichier CSV dans le sous-dossier
+        for fichier in os.listdir(chemin_sous_dossier):
+            if fichier.endswith(".csv"):
+                chemin_fichier = os.path.join(chemin_sous_dossier, fichier)
+                
+                # Lire le CSV et l'ajouter à la liste
+                df = pd.read_csv(chemin_fichier)
+                df_list.append(df)
+        
+        # Concatenation des DataFrames du sous-dossier
+        if df_list:
+            table = pd.concat(df_list, ignore_index=True)
+            tables_par_sous_dossier[sous_dossier] = table  # Stocke la table pour chaque sous-dossier
+
+# Affiche le dictionnaire avec les tables
+for sous_dossier, table in tables_par_sous_dossier.items():
+    print(f"Table pour le sous-dossier '{sous_dossier}':")
+    print(table)
+    print("\n")
