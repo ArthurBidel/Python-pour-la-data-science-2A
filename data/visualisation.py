@@ -24,6 +24,13 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
+import matplotlib.pyplot as plt
+import geopandas as gpd
+import matplotlib.animation as animation
+from matplotlib import colors
+from IPython.display import Image, display
+import os
+from shapely import wkt 
 
 
 # Définir la charte graphique pour qu'elle soit uniforme entre les différentes stats descriptives (on veut que nos graphiques matchent avec nos cartes)
@@ -126,7 +133,7 @@ def tracer_evolution_taux_relatif_lisse(
     df, charte_graphique, 
     title="Évolution des taux d'infractions (Indice 1 en 1996)", 
     xlabel="Date", ylabel="Taux normalisé"
-):
+    ):
     """
     Trace l'évolution des taux normalisés pour une liste d'indicateurs avec lissage.
 
@@ -285,94 +292,3 @@ def évolution_indicateur(df, indicateur):
     
     # Afficher la figure
     plt.show()
-
-# animation_script.py
-
-import matplotlib.pyplot as plt
-import geopandas as gpd
-import matplotlib.animation as animation
-from matplotlib import colors
-from IPython.display import Image, display
-import os
-from shapely import wkt  # si vous utilisez shapely pour la conversion des géométries
-
-# Définition de la fonction d'animation
-def evolution_indicateur_animation(df, indicateur, charte_graphique2):
-    # Désactiver le mode interactif
-    plt.ioff()
-    
-    # Préparer la figure et l'axe
-    fig, ax = plt.subplots(figsize=(10, 8))
-    
-    # Créer une liste des années de 1996 à 2022
-    annees = list(range(1996, 2023))
-    
-    # Fonction d'initialisation pour l'animation
-    def init():
-        ax.clear()
-        ax.set_title(f"{indicateur} - Initialisation")
-        ax.axis("off")
-        return []
-    
-    # Fonction de mise à jour pour chaque frame de l'animation
-    def update(frame):
-        ax.clear()
-        annee = annees[frame]
-        
-        # Filtrer les données pour l'indicateur et l'année en cours
-        df_filtre = df[(df['Année'] == str(annee)) & (df['Indicateur'] == indicateur)]
-        
-        # Créer un GeoDataFrame avec la colonne 'Géométrie'
-        gdf = gpd.GeoDataFrame(df_filtre, geometry='Géométrie')
-        
-        # Vérifier si le GeoDataFrame n'est pas vide
-        if not gdf.empty:
-            # Calculer les limites de couleur
-            vmin = df[df['Indicateur'] == indicateur]['Taux (/10 000)'].min()
-            vmax = df[df['Indicateur'] == indicateur]['Taux (/10 000)'].max()
-            
-            # Tracer la carte
-            gdf.plot(column='Taux (/10 000)', 
-                     cmap=charte_graphique2.get(f'{indicateur}'), 
-                     ax=ax, 
-                     legend=False,
-                     vmin=vmin,
-                     vmax=vmax,
-                     edgecolor='0.8',
-                     linewidth=0.7)
-            
-            # Titre de la carte
-            ax.set_title(f"{indicateur} - {annee}")
-        
-        ax.axis("off")
-        ax.set_aspect('equal')  
-        ax.set_aspect(1.4)  # Étirement vertical de la carte
-        
-        return []
-    
-    # Créer l'animation
-    anim = animation.FuncAnimation(fig, 
-                                   update, 
-                                   init_func=init,
-                                   frames=len(annees), 
-                                   interval=500,  # 500 ms entre chaque frame
-                                   blit=True)
-    
-    # Ajouter une barre de couleur
-    vmin = df[df['Indicateur'] == indicateur]['Taux (/10 000)'].min()
-    vmax = df[df['Indicateur'] == indicateur]['Taux (/10 000)'].max()
-    sm = plt.cm.ScalarMappable(cmap=charte_graphique2.get(f'{indicateur}'), norm=colors.Normalize(vmin=vmin, vmax=vmax))
-    sm.set_array([])
-    plt.colorbar(sm, ax=ax, orientation='horizontal', fraction=0.036, pad=0.1, label="Occurences pour 10 000 habitants")
-    
-    # Sauvegarder l'animation au format GIF
-    os.makedirs('animations', exist_ok=True)
-    save_path = f'animations/evolution_{indicateur.replace(" ", "_")}.gif'
-    anim.save(save_path, writer='pillow', fps=2)
-
-    # Afficher l'animation dans le notebook
-    display(Image(filename=save_path))
-    
-    print(f"Animation sauvegardée dans {save_path}")
-    
-    return anim
