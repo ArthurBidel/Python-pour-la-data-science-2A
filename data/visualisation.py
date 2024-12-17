@@ -16,6 +16,11 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import matplotlib.colors as colors
 from IPython.display import Image, display
+from shapely import wkt
+import geopandas as gpd
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+
 
 
 # Définir la charte graphique pour qu'elle soit uniforme entre les différentes stats descriptives (on veut que nos graphiques matchent avec nos cartes)
@@ -204,13 +209,16 @@ def boxplot_indicateur_par_saison(df, indicateur):
     # Afficher le plot
     plt.show()
 
-
 def évolution_indicateur(df, indicateur):
     # Définir le nombre de cartes par ligne
     cartes_par_ligne = 7
     
+    # Récupérer toutes les années uniques comme chaînes de caractères dans les données
+    annees = df['Année'].unique()
+    annees = sorted(annees)
+    
     # Calculer le nombre de lignes nécessaires
-    total_annees = 2022 - 1996 + 1
+    total_annees = len(annees)
     lignes = (total_annees // cartes_par_ligne) + (1 if total_annees % cartes_par_ligne != 0 else 0)
     
     # Créer une figure avec une taille ajustée pour les petites cartes
@@ -222,12 +230,20 @@ def évolution_indicateur(df, indicateur):
     # Créer une liste pour stocker les valeurs des taux pour l'échelle partagée
     taux_values = []
 
-    # Parcours des années de 1996 à 2022
-    for idx, annee in enumerate(range(1996, 2023)):
+    # Parcours des années dans les données (qui sont des chaînes de caractères)
+    for idx, annee in enumerate(annees):
         # Filtrer les données pour l'indicateur et l'année en cours
-        df_filtre = df[(df['Année'] == str(annee)) & (df['Indicateur'] == indicateur)]
+        df_filtre = df[(df['Année'] == annee) & (df['Indicateur'] == indicateur)]
         
-        # Créer un GeoDataFrame avec la colonne 'Géométrie'
+        # Vérification et conversion des géométries en objets géométriques valides si nécessaire
+        if df_filtre['Géométrie'].dtype == 'O':  # Si la colonne 'Géométrie' est de type objet (chaîne de caractères)
+            try:
+                # Utiliser .loc pour éviter la copie et éviter l'avertissement
+                df_filtre.loc[:, 'Géométrie'] = df_filtre['Géométrie'].apply(wkt.loads)
+            except Exception as e:
+                print(f"Erreur de conversion WKT pour l'année {annee}: {e}")
+
+        # Définir la colonne géométrique active
         gdf = gpd.GeoDataFrame(df_filtre, geometry='Géométrie')
         
         # Ajouter les valeurs des taux dans la liste pour l'échelle partagée
