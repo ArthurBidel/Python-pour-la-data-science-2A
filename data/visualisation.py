@@ -18,7 +18,6 @@ import matplotlib.colors as colors
 from IPython.display import Image, display
 
 
-
 # Définir la charte graphique pour qu'elle soit uniforme entre les différentes stats descriptives (on veut que nos graphiques matchent avec nos cartes)
 charte_graphique = {
     "Vols sans violence": "Magenta",
@@ -206,7 +205,7 @@ def boxplot_indicateur_par_saison(df, indicateur):
     plt.show()
 
 
-def évolution_indicateur(indicateur):
+def évolution_indicateur(df, indicateur):
     # Définir le nombre de cartes par ligne
     cartes_par_ligne = 7
     
@@ -226,7 +225,7 @@ def évolution_indicateur(indicateur):
     # Parcours des années de 1996 à 2022
     for idx, annee in enumerate(range(1996, 2023)):
         # Filtrer les données pour l'indicateur et l'année en cours
-        df_filtre = df_indicateurs_dep[(df_indicateurs_dep['Année'] == str(annee)) & (df_indicateurs_dep['Indicateur'] == indicateur)]
+        df_filtre = df[(df['Année'] == str(annee)) & (df['Indicateur'] == indicateur)]
         
         # Créer un GeoDataFrame avec la colonne 'Géométrie'
         gdf = gpd.GeoDataFrame(df_filtre, geometry='Géométrie')
