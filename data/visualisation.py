@@ -57,6 +57,13 @@ charte_graphique2 = {
     "Homicides": "Purples"
 }
 
+#URL de téléchargement des contours départementaux
+url = "https://www.data.gouv.fr/fr/datasets/r/90b9341a-e1f7-4d75-a73c-bbc010c7feeb"
+contours_dpt = gpd.read_file(url)
+
+# Créer le dictionnaire des géométries via une compréhension
+dictionnaire_geo = {row['code']: row['geometry'] for _, row in contours_dpt.iterrows()}
+
 #Version de la fonction de tracage où on peut appliquer une échelle logarithmique ou lisser si on le veut (argument à appeler quand on appliquer la fonction)
 
 def tracer_evolution_taux(
@@ -244,16 +251,15 @@ def évolution_indicateur(df, indicateur):
     for idx, annee in enumerate(annees):
         # Filtrer les données pour l'indicateur et l'année en cours
         df_filtre = df[(df['Année'] == annee) & (df['Indicateur'] == indicateur)]
-        
-        # Vérification et conversion des géométries en objets géométriques valides si nécessaire
-        if df_filtre['Géométrie'].dtype == 'O': 
-            try:
-                df_filtre.loc[:, 'Géométrie'] = df_filtre['Géométrie'].apply(wkt.loads)
-            except Exception as e:
-                print(f"Erreur de conversion WKT pour l'année {annee}: {e}")
 
-        # Définir la colonne géométrique active
-        gdf = gpd.GeoDataFrame(df_filtre, geometry='Géométrie')
+
+
+
+        # Ajouter une colonne 'geometry' en mappant le dictionnaire de géométrie sur la colonne 'Département'
+        df_filtre["geometry"] = df_filtre["Département"].map(dictionnaire_geo)
+
+        # Créer un GeoDataFrame avec la nouvelle colonne 'geometry'
+        gdf = gpd.GeoDataFrame(df_filtre, geometry="geometry")
         
         # Ajouter les valeurs des taux dans la liste pour l'échelle partagée
         taux_values.extend(gdf['Taux (/10 000)'].dropna().tolist())
@@ -292,3 +298,99 @@ def évolution_indicateur(df, indicateur):
     
     # Afficher la figure
     plt.show()
+
+
+def evolution_indicateur_animation(df, indicateur, dictionnaire_geometrie):
+    import os
+    from IPython.display import display, Image
+    from matplotlib import animation, colors
+
+    plt.ioff()
+    
+    # Préparer la figure et l'axe
+    fig, ax = plt.subplots(figsize=(10, 8))
+    
+    # Créer une liste des années de 1996 à 2022
+    annees = list(range(1996, 2023))
+    
+    # Fonction d'initialisation pour l'animation
+    def init():
+        ax.clear()
+        ax.set_title(f"{indicateur} - Initialisation")
+        ax.axis("off")
+        return []
+    
+    # Fonction de mise à jour pour chaque frame de l'animation
+    def update(frame):
+        ax.clear()
+        annee = annees[frame]
+        
+        # Filtrer les données pour l'indicateur et l'année en cours
+        df_filtre = df[(df['Année'] == annee) & (df['Indicateur'] == indicateur)].copy()
+        
+        # Ajouter les géométries depuis le dictionnaire
+        df_filtre['geometry'] = df_filtre['Département'].map(dictionnaire_geometrie)
+        
+
+        
+        # Créer un GeoDataFrame à partir du DataFrame filtré
+        gdf = gpd.GeoDataFrame(df_filtre, geometry='geometry')
+        
+        # Vérifier si le GeoDataFrame n'est pas vide
+        if not gdf.empty:
+            # Calculer les limites de couleur
+            vmin = gdf['Taux (/10 000)'].min()
+            vmax = gdf['Taux (/10 000)'].max()
+            
+            # Tracer la carte
+            gdf.plot(column='Taux (/10 000)', 
+                     cmap=charte_graphique2.get(f'{indicateur}'), 
+                     ax=ax, 
+                     legend=False,
+                     vmin=vmin,
+                     vmax=vmax,
+                     edgecolor='0.8',
+                     linewidth=0.7)
+            
+            # Titre de la carte
+            ax.set_title(f"{indicateur} - {annee}")
+        else:
+            print(f"Année {annee} : Aucune donnée disponible pour {indicateur}")
+            print(df_filtre)
+        
+        ax.axis("off")
+        ax.set_aspect('equal') 
+        ax.set_aspect(1.4)  # Étirement vertical de la carte 
+        
+        return []
+    
+    # Créer l'animation
+    anim = animation.FuncAnimation(fig, 
+                                   update, 
+                                   init_func=init,
+                                   frames=len(annees), 
+                                   interval=500,  # 500 ms entre chaque frame
+                                   blit=False)
+    
+    # Ajouter une barre de couleur
+    vmin = df[df['Indicateur'] == indicateur]['Taux (/10 000)'].min()
+    vmax = df[df['Indicateur'] == indicateur]['Taux (/10 000)'].max()
+    sm = plt.cm.ScalarMappable(cmap=charte_graphique2.get(f'{indicateur}'), norm=colors.Normalize(vmin=vmin, vmax=vmax))
+    sm.set_array([])
+    plt.colorbar(sm, ax=ax, orientation='horizontal', fraction=0.036, pad=0.1, label="Occurences pour 10 000 habitants")
+    
+    # Sauvegarder l'animation au format GIF
+    os.makedirs('animations', exist_ok=True)  # Crée un dossier 'animations' s'il n'existe pas
+    
+    # Chemin de sauvegarde
+    save_path = f'animations/evolution_{indicateur.replace(' ', '_')}.gif'
+    
+    # Sauvegarde en GIF
+    anim.save(save_path, writer='pillow', fps=2)
+
+    # Afficher l'animation
+    display(Image(filename=save_path))
+    
+    print(f"Animation sauvegardée dans {save_path}")
+    
+    return anim
