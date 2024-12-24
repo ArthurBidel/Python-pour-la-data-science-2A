@@ -253,10 +253,8 @@ def évolution_indicateur(df, indicateur):
         df_filtre = df[(df['Année'] == annee) & (df['Indicateur'] == indicateur)]
 
 
-
-
         # Ajouter une colonne 'geometry' en mappant le dictionnaire de géométrie sur la colonne 'Département'
-        df_filtre["geometry"] = df_filtre["Département"].map(dictionnaire_geo)
+        df_filtre.loc[:, "geometry"] = df_filtre["Département"].map(dictionnaire_geo)
 
         # Créer un GeoDataFrame avec la nouvelle colonne 'geometry'
         gdf = gpd.GeoDataFrame(df_filtre, geometry="geometry")
