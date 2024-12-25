@@ -199,7 +199,7 @@ def tracer_evolution_taux_relatif_lisse(
     plt.show()
 
 # Fonction pour tracer le boxplot avec couleurs personnalisées pour chaque saison
-def boxplot_indicateur_par_saison(df, indicateur):
+def boxplot_indicateur_par_saison(df, indicateur, title="Boxplot"):
     # Ajouter la colonne 'Saison' au dataframe
     
     # Filtrer les données pour l'indicateur spécifié
@@ -219,7 +219,7 @@ def boxplot_indicateur_par_saison(df, indicateur):
                 palette=saison_colors)
     
     # Ajouter un titre et des labels
-    plt.title(f'Boxplot du taux de {indicateur} selon les saisons')
+    plt.title(title, fontsize=14)
     plt.xlabel('Saison')
     plt.ylabel('Taux (/10 000)')
     
@@ -642,7 +642,7 @@ def get_increase(df, indicateur, date1, date2):
         # Calculer l'évolution en pourcentage
         evolution = ((nombre_2022 - nombre_1996) / nombre_1996) * 100
 
-        print(f" {indicateur} : {evolution} %")
+        print(f" {indicateur} entre {date1} et {date2}: {evolution} %")
     
     except KeyError:
         raise KeyError(f"L'indicateur '{indicateur}' ou la colonne 'Année' est introuvable dans le dataframe.")
