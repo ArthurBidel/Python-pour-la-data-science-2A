@@ -199,7 +199,7 @@ def tracer_evolution_taux_relatif_lisse(
     plt.show()
 
 # Fonction pour tracer le boxplot avec couleurs personnalisées pour chaque saison
-def boxplot_indicateur_par_saison(df, indicateur):
+def boxplot_indicateur_par_saison(df, indicateur, title="Boxplot"):
     # Ajouter la colonne 'Saison' au dataframe
     
     # Filtrer les données pour l'indicateur spécifié
@@ -219,7 +219,7 @@ def boxplot_indicateur_par_saison(df, indicateur):
                 palette=saison_colors)
     
     # Ajouter un titre et des labels
-    plt.title(f'Boxplot du taux de {indicateur} selon les saisons')
+    plt.title(title, fontsize=14)
     plt.xlabel('Saison')
     plt.ylabel('Taux (/10 000)')
     
@@ -617,36 +617,74 @@ def evolution_idf_animation(df, indicateur):
 
 
 
-def get_increase(df, indicateur): 
+def get_increase(df, indicateur, date1, date2): 
     """
     Calcule l'évolution en pourcentage du taux de délinquance pour un indicateur spécifique entre 1996 et 2022.
 
     Args : 
         df : le dataframe, la fonction suppose qu'il a la structure de df_indicateurs_nat ou df_indicateurs_dep. 
-        En particulier elle suppose l'existence d'une colonne 'Année', 'Mois' et 'Indicateur'.
+        En particulier elle suppose l'existence d'une colonne 'Date', 'Indicateur' et 'Taux (/10 000)'.
         indicateur : un des huits indicateurs de délinquance
+        date1, date2 : les bornes temporelles souhaitées au format '1996-01-01'
 
     Returns : L'évolution en pourcentage de l'indicateur
     """
     try:
         # Avoir les extremum
-        taux_1996 = df.loc[
-            (df['Année'] == 1996) & (df['Mois'] == 1) & (df['Indicateur'] == indicateur), 
-            'Taux (/10 000)'
-        ].values[0]
+        nombre_1996 = df.loc[
+                        (df['Date'] == date1) & (df['Indicateur'] == indicateur), 'Taux (/10 000)'
+                        ].iloc[0]
 
-        taux_2022 = df.loc[
-            (df['Année'] == 2022) & (df['Mois'] == 8) & (df['Indicateur'] == indicateur), 
-            'Taux (/10 000)'
-        ].values[0]
+        nombre_2022 = df.loc[
+                        (df['Date'] == date2) & (df['Indicateur'] == indicateur), 'Taux (/10 000)'
+                        ].iloc[0]
         
         # Calculer l'évolution en pourcentage
-        evolution = ((taux_2022 - taux_1996) / taux_1996) * 100
+        evolution = ((nombre_2022 - nombre_1996) / nombre_1996) * 100
 
-        print(f" '{indicateur}' : '{evolution}' %")
+        print(f" {indicateur} entre {date1} et {date2}: {evolution} %")
     
     except KeyError:
         raise KeyError(f"L'indicateur '{indicateur}' ou la colonne 'Année' est introuvable dans le dataframe.")
 
     except IndexError:
         raise IndexError(f"Les données pour 1996 ou 2022 sont manquantes dans le dataframe.")
+
+
+
+def get_mean(df, indicateur, date_comp):
+    """
+    Calcule la moyenne du taux d'infraction pour l'indicateur et permet de la comparer avec le taux actuel.
+
+    Parameters:
+        df (pd.DataFrame): Le dataframe contenant les colonnes 'Date', 'Indicateur', et 'Taux (/10 000)'.
+        indicateur (str): Le libellé de l'indicateur à analyser.
+        date_comp (str): La date choisie pour calculer l'écart (au format 'YYYY-MM-DD').
+
+    Returns:
+        tuple: Moyenne du taux (float), taux à la date voulue (float), écart à la moyenne à la date choisie (float).
+    """
+    try:
+        # Filtrer les données pour l'indicateur donné
+        indicateur_data = df[df['Indicateur'] == indicateur]
+        
+        # Calculer la moyenne du taux
+        mean_taux = indicateur_data['Taux (/10 000)'].mean()
+        
+        # Récupérer le taux à la date choisie
+        taux_date = indicateur_data.loc[
+            indicateur_data['Date'] == date_comp, 'Taux (/10 000)'
+        ].iloc[0]
+        
+        # Calculer l'écart à la moyenne
+        ecart = taux_date - mean_taux
+        
+        print(f"Nombre d'infractions pour 10 000 habitants moyen : {mean_taux}")
+        print(f"Nombre au {date_comp} : {taux_date}")
+        print(f"Différence : {ecart}")
+    
+    except KeyError:
+        raise KeyError("Assurez-vous que les colonnes 'Date', 'Indicateur', et 'Taux (/10 000)' sont présentes dans le dataframe.")
+    except IndexError:
+        raise IndexError(f"Aucune donnée trouvée pour la date {date_comp} et l'indicateur '{indicateur}'.")
+
