@@ -617,7 +617,7 @@ def evolution_idf_animation(df, indicateur):
 
 
 
-def get_increase(df, indicateur): 
+def get_increase(df, indicateur, date1, date2): 
     """
     Calcule l'évolution en pourcentage du taux de délinquance pour un indicateur spécifique entre 1996 et 2022.
 
@@ -625,25 +625,24 @@ def get_increase(df, indicateur):
         df : le dataframe, la fonction suppose qu'il a la structure de df_indicateurs_nat ou df_indicateurs_dep. 
         En particulier elle suppose l'existence d'une colonne 'Année', 'Mois' et 'Indicateur'.
         indicateur : un des huits indicateurs de délinquance
+        date1, date2 : les bornes temporelles souhaitées au format '1996-01-01'
 
     Returns : L'évolution en pourcentage de l'indicateur
     """
     try:
         # Avoir les extremum
-        taux_1996 = df.loc[
-            (df['Année'] == 1996) & (df['Mois'] == 1) & (df['Indicateur'] == indicateur), 
-            'Taux (/10 000)'
-        ].values[0]
+        nombre_1996 = df.loc[
+                        (df['Date'] == date1) & (df['Indicateur'] == indicateur), 'Nombre'
+                        ].iloc[0]
 
-        taux_2022 = df.loc[
-            (df['Année'] == 2022) & (df['Mois'] == 8) & (df['Indicateur'] == indicateur), 
-            'Taux (/10 000)'
-        ].values[0]
+        nombre_2022 = df.loc[
+                        (df['Date'] == date2) & (df['Indicateur'] == indicateur), 'Nombre'
+                        ].iloc[0]
         
         # Calculer l'évolution en pourcentage
-        evolution = ((taux_2022 - taux_1996) / taux_1996) * 100
+        evolution = ((nombre_2022 - nombre_1996) / nombre_1996) * 100
 
-        print(f" '{indicateur}' : '{evolution}' %")
+        print(f" {indicateur} : {evolution} %")
     
     except KeyError:
         raise KeyError(f"L'indicateur '{indicateur}' ou la colonne 'Année' est introuvable dans le dataframe.")
