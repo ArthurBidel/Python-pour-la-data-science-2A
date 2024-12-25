@@ -614,3 +614,39 @@ def evolution_idf_animation(df, indicateur):
     display(Image(filename=save_path))
     print(f"Animation sauvegardée dans {save_path}")
     return anim
+
+
+
+def get_increase(df, indicateur): 
+    """
+    Calcule l'évolution en pourcentage du taux de délinquance pour un indicateur spécifique entre 1996 et 2022.
+
+    Args : 
+        df : le dataframe, la fonction suppose qu'il a la structure de df_indicateurs_nat ou df_indicateurs_dep. 
+        En particulier elle suppose l'existence d'une colonne 'Année', 'Mois' et 'Indicateur'.
+        indicateur : un des huits indicateurs de délinquance
+
+    Returns : L'évolution en pourcentage de l'indicateur
+    """
+    try:
+        # Avoir les extremum
+        taux_1996 = df.loc[
+            (df['Année'] == 1996) & (df['Mois'] == 1) & (df['Indicateur'] == indicateur), 
+            'Taux (/10 000)'
+        ].values[0]
+
+        taux_2022 = df.loc[
+            (df['Année'] == 2022) & (df['Mois'] == 8) & (df['Indicateur'] == indicateur), 
+            'Taux (/10 000)'
+        ].values[0]
+        
+        # Calculer l'évolution en pourcentage
+        evolution = ((taux_2022 - taux_1996) / taux_1996) * 100
+
+        print(f" '{indicateur}' : '{evolution}' %")
+    
+    except KeyError:
+        raise KeyError(f"L'indicateur '{indicateur}' ou la colonne 'Année' est introuvable dans le dataframe.")
+
+    except IndexError:
+        raise IndexError(f"Les données pour 1996 ou 2022 sont manquantes dans le dataframe.")
