@@ -623,7 +623,7 @@ def get_increase(df, indicateur, date1, date2):
 
     Args : 
         df : le dataframe, la fonction suppose qu'il a la structure de df_indicateurs_nat ou df_indicateurs_dep. 
-        En particulier elle suppose l'existence d'une colonne 'Année', 'Mois' et 'Indicateur'.
+        En particulier elle suppose l'existence d'une colonne 'Date', 'Indicateur' et 'Taux (/10 000)'.
         indicateur : un des huits indicateurs de délinquance
         date1, date2 : les bornes temporelles souhaitées au format '1996-01-01'
 
@@ -632,11 +632,11 @@ def get_increase(df, indicateur, date1, date2):
     try:
         # Avoir les extremum
         nombre_1996 = df.loc[
-                        (df['Date'] == date1) & (df['Indicateur'] == indicateur), 'Nombre'
+                        (df['Date'] == date1) & (df['Indicateur'] == indicateur), 'Taux (/10 000)'
                         ].iloc[0]
 
         nombre_2022 = df.loc[
-                        (df['Date'] == date2) & (df['Indicateur'] == indicateur), 'Nombre'
+                        (df['Date'] == date2) & (df['Indicateur'] == indicateur), 'Taux (/10 000)'
                         ].iloc[0]
         
         # Calculer l'évolution en pourcentage
@@ -649,3 +649,42 @@ def get_increase(df, indicateur, date1, date2):
 
     except IndexError:
         raise IndexError(f"Les données pour 1996 ou 2022 sont manquantes dans le dataframe.")
+
+
+
+def get_mean(df, indicateur, date_comp):
+    """
+    Calcule la moyenne du taux d'infraction pour l'indicateur et permet de la comparer avec le taux actuel.
+
+    Parameters:
+        df (pd.DataFrame): Le dataframe contenant les colonnes 'Date', 'Indicateur', et 'Taux (/10 000)'.
+        indicateur (str): Le libellé de l'indicateur à analyser.
+        date_comp (str): La date choisie pour calculer l'écart (au format 'YYYY-MM-DD').
+
+    Returns:
+        tuple: Moyenne du taux (float), taux à la date voulue (float), écart à la moyenne à la date choisie (float).
+    """
+    try:
+        # Filtrer les données pour l'indicateur donné
+        indicateur_data = df[df['Indicateur'] == indicateur]
+        
+        # Calculer la moyenne du taux
+        mean_taux = indicateur_data['Taux (/10 000)'].mean()
+        
+        # Récupérer le taux à la date choisie
+        taux_date = indicateur_data.loc[
+            indicateur_data['Date'] == date_comp, 'Taux (/10 000)'
+        ].iloc[0]
+        
+        # Calculer l'écart à la moyenne
+        ecart = taux_date - mean_taux
+        
+        print(f"Nombre d'infractions pour 10 000 habitants moyen : {mean_taux}")
+        print(f"Nombre au {date_comp} : {taux_date}")
+        print(f"Différence : {ecart}")
+    
+    except KeyError:
+        raise KeyError("Assurez-vous que les colonnes 'Date', 'Indicateur', et 'Taux (/10 000)' sont présentes dans le dataframe.")
+    except IndexError:
+        raise IndexError(f"Aucune donnée trouvée pour la date {date_comp} et l'indicateur '{indicateur}'.")
+
