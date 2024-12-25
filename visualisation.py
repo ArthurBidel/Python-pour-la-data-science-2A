@@ -392,3 +392,225 @@ def evolution_indicateur_animation(df, indicateur, dictionnaire_geometrie):
     print(f"Animation sauvegardée dans {save_path}")
     
     return anim
+
+
+from matplotlib.colors import LinearSegmentedColormap
+
+# Définir une colormap personnalisée
+def create_custom_greys_cmap():
+    # Points de contrôle pour la colormap (0: blanc, 1: noir, ajustés pour nuances intermédiaires)
+    colors = [
+        (0.95, 0.95, 0.95),  # Très clair
+        (0.8, 0.8, 0.8),    # Clair
+        (0.6, 0.6, 0.6),    # Intermédiaire
+        (0.4, 0.4, 0.4),    # Assez foncé
+        (0.2, 0.2, 0.2)     # Foncé mais pas noir
+    ]
+    return LinearSegmentedColormap.from_list("CustomGreys", colors)
+
+# Créer la colormap
+custom_greys_cmap = create_custom_greys_cmap()
+
+
+def animer_evolution_densite(df, colonne_densite, dictionnaire_geometrie):
+    import os
+    from IPython.display import display, Image
+    from matplotlib import animation, colors
+    import geopandas as gpd
+
+    plt.ioff()
+    
+    # Préparer la figure et l'axe
+    fig, ax = plt.subplots(figsize=(10, 8))
+    
+    # Créer une liste des années disponibles dans le DataFrame
+    annees = sorted(df['Année'].unique())
+    
+    # Fonction d'initialisation pour l'animation
+    def init():
+        ax.clear()
+        ax.set_title("Initialisation")
+        ax.axis("off")
+        return []
+    
+    # Fonction de mise à jour pour chaque frame de l'animation
+    def update(frame):
+        ax.clear()
+        annee = annees[frame]
+        
+        # Filtrer les données pour l'année en cours
+        df_filtre = df[df['Année'] == annee].copy()
+        
+        # Ajouter les géométries depuis le dictionnaire
+        df_filtre['geometry'] = df_filtre['Département'].map(dictionnaire_geometrie)
+        
+        # Créer un GeoDataFrame à partir du DataFrame filtré
+        gdf = gpd.GeoDataFrame(df_filtre, geometry='geometry')
+        
+        # Vérifier si le GeoDataFrame n'est pas vide
+        if not gdf.empty:
+            # Calculer les limites de couleur
+            vmin = df[colonne_densite].min()
+            vmax = df[colonne_densite].max()
+            
+            # Tracer la carte
+            gdf.plot(column=colonne_densite, 
+                     cmap=custom_greys_cmap,  # Colormap générique
+                     ax=ax, 
+                     legend=False,
+                     vmin=vmin,
+                     vmax=vmax,
+                     edgecolor='0.8',
+                     linewidth=0.5)
+            
+            # Titre de la carte
+            ax.set_title(f"Densité de population - {annee}")
+        else:
+            print(f"Année {annee} : Aucune donnée disponible")
+        
+        ax.axis("off")
+        ax.set_aspect(1.4)  # Étirement vertical de la carte 
+        
+        return []
+    
+    # Créer l'animation
+    anim = animation.FuncAnimation(fig, 
+                                   update, 
+                                   init_func=init,
+                                   frames=len(annees), 
+                                   interval=500,  # 500 ms entre chaque frame
+                                   blit=False)
+    
+    # Ajouter une barre de couleur
+    vmin = df[colonne_densite].min()
+    vmax = df[colonne_densite].max()
+    sm = plt.cm.ScalarMappable(cmap=custom_greys_cmap, norm=colors.Normalize(vmin=vmin, vmax=vmax))
+    sm.set_array([])
+    plt.colorbar(sm, ax=ax, orientation='horizontal', fraction=0.036, pad=0.1, label="Densité (hab/km²)")
+    
+    # Sauvegarder l'animation au format GIF
+    os.makedirs('animations', exist_ok=True)  # Crée un dossier 'animations' s'il n'existe pas
+    
+    # Chemin de sauvegarde
+    save_path = f'animations/evolution_densite.gif'
+    
+    # Sauvegarde en GIF
+    anim.save(save_path, writer='pillow', fps=2)
+
+    # Afficher l'animation
+    display(Image(filename=save_path))
+    
+    print(f"Animation sauvegardée dans {save_path}")
+    
+    return anim
+
+
+
+def evolution_idf_animation(df, indicateur):
+    import os
+    from IPython.display import display, Image
+    from matplotlib import animation, colors
+    import geopandas as gpd
+    import matplotlib.pyplot as plt
+    
+    plt.ioff()
+    
+    # Filtrer pour l'Île-de-France (codes 75, 77, 78, 91, 92, 93, 94, 95)
+    idf_codes = ['75', '77', '78', '91', '92', '93', '94', '95']
+    df_idf = df[df['Département'].isin(idf_codes)].copy()
+    
+    # Ajouter la géométrie à partir du dictionnaire
+    df_idf['geometry'] = df_idf['Département'].map(dictionnaire_geo)
+
+    nom_departement = {
+        '75': 'Paris', '77': 'Seine-et-Marne', '78': 'Yvelines', '91': 'Essonne', 
+        '92': 'Hauts-de-Seine', '93': 'Seine-Saint-Denis', '94': 'Val-de-Marne', '95': 'Val-d\'Oise'
+    }
+    df_idf['Nom_Departement'] = df_idf['Département'].map(nom_departement)
+
+    gdf_idf = gpd.GeoDataFrame(df_idf, geometry='geometry')
+    
+    # Créer une liste des années
+    annees = sorted(df_idf['Année'].unique())
+
+    # Définir les limites des valeurs de densité pour la colorbar
+    vmin = df_idf[indicateur].min()
+    vmax = df_idf[indicateur].max()
+    
+    # Préparer la figure et l'axe
+    fig, ax = plt.subplots(figsize=(10, 8), dpi=200)
+
+    # Configurer la colorbar une seule fois
+    sm = plt.cm.ScalarMappable(cmap=custom_greys_cmap, norm=colors.Normalize(vmin=vmin, vmax=vmax))
+    sm.set_array([])  # Nécessaire pour éviter les erreurs avec colorbar
+    cbar = fig.colorbar(sm, ax=ax, orientation='horizontal', label=f"{indicateur}")
+    
+    # Fonction d'initialisation pour l'animation
+    def init():
+        ax.clear()
+        ax.set_title("Initialisation")
+        ax.axis("off")
+        return []
+    
+    # Fonction de mise à jour pour chaque frame de l'animation
+    def update(frame):
+        ax.clear()
+        annee = annees[frame]
+        
+        # Filtrer les données pour l'année en cours
+        gdf_frame = gdf_idf[gdf_idf['Année'] == annee]
+        
+        # Définir les limites des axes pour centrer sur l'Île-de-France
+        bounds = gdf_frame.total_bounds
+        ax.set_xlim(bounds[0], bounds[2])
+        ax.set_ylim(bounds[1], bounds[3])
+        
+        # Tracer la carte
+        gdf_frame.plot(
+            column=indicateur,
+            cmap=custom_greys_cmap,  # Utilisez une cmap adaptée
+            ax=ax,
+            legend=False,
+            edgecolor='0.8',
+            linewidth=0.7
+        )
+        
+        # Ajouter le titre de l'année
+        ax.set_title(f"{indicateur} - {annee}", fontsize=14)
+        ax.axis("off")
+        ax.set_aspect(1.4)
+
+        # Ajouter les noms des départements
+        for _, row in gdf_frame.iterrows():
+            # Récupérer le centroïde du département
+            centroid = row['geometry'].centroid
+            # Ajouter le texte sans boîte blanche, en gris foncé et avec une police plus fine
+            ax.text(
+                centroid.x, centroid.y, 
+                row['Nom_Departement'], 
+                ha='center', va='center', 
+                fontsize=8, color='#666666', 
+                fontweight='light',  
+            )
+        
+        return []
+    
+    # Créer l'animation
+    anim = animation.FuncAnimation(
+        fig,
+        update,
+        init_func=init,
+        frames=len(annees),
+        interval=500,
+        blit=False
+    )
+    
+    # Sauvegarder l'animation au format GIF
+    os.makedirs('animations', exist_ok=True)
+    save_path = 'animations/evolution_idf_densite.gif'
+    anim.save(save_path, writer='pillow', fps=2)
+    
+    # Afficher l'animation
+    display(Image(filename=save_path))
+    print(f"Animation sauvegardée dans {save_path}")
+    return anim
