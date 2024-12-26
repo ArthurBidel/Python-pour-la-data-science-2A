@@ -688,3 +688,50 @@ def get_mean(df, indicateur, date_comp):
     except IndexError:
         raise IndexError(f"Aucune donnée trouvée pour la date {date_comp} et l'indicateur '{indicateur}'.")
 
+
+
+def tri_occurence(df):
+    '''
+    Fonction récapitulative de tout le réagencement (que tu avais fait AnhLinh)
+    '''
+    df_résultat = df.groupby(["Année", "Mois"]).size().reset_index(name="Texte")
+
+    types = df['Nature'].unique()
+
+    for type in types : 
+        type_lower = type.capitalize()
+        grouped_type = (df[df["Nature"] == type]
+            .groupby(["Année", "Mois"])
+            .size()
+            .reset_index(name=f"{type_lower}")
+        )
+        df_résultat = pd.merge(df_résultat,
+                                grouped_type,
+                                how="left",
+                                on=["Année", "Mois"]
+                            )
+
+    # Remplacer les NaN par 0 pour les colonnes ajoutées
+    df_résultat.fillna(0, inplace=True)
+
+    # Suppression des lignes où 'Année' est 2222
+    df_résultat.drop(df_résultat[df_résultat['Année'] == '2222'].index, inplace=True)
+
+    df_résultat['day']=1
+    df_résultat['Mois'] = df_résultat['Mois'].astype(int)
+    df_résultat.rename(columns={'Mois': 'month'}, inplace=True) # Bizarre car le reste est en fr?
+    df_résultat['Année'] = df_résultat['Année'].astype(int)
+    df_résultat.rename(columns={'Année': 'year'}, inplace=True) # Bizarre car le reste est en fr?
+    df_résultat.head()
+
+
+    df_résultat['Date'] = pd.to_datetime(df_résultat[['year', 'month', 'day']])
+    df_res = df_résultat.melt(id_vars=['year', "month", 'day', 'Date'],
+                      var_name='Indicateur',  
+                      value_name='Nombre')  
+
+    df_sorted = df_res.sort_values(by='Date').reset_index(drop=True)
+    df_sorted['Cumulatif'] = df_sorted.groupby('Indicateur')['Nombre'].cumsum()
+
+    return(df_sorted)
+
