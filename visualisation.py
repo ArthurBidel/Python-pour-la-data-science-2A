@@ -726,6 +726,7 @@ def tri_occurence(df):
 
     # Suppression des lignes où 'Année' est 2222
     df_résultat.drop(df_résultat[df_résultat['Année'] == '2222'].index, inplace=True)
+    df_résultat.drop(df_résultat[df_résultat['Année'] == 2222].index, inplace=True)
 
     df_résultat['day']=1
     df_résultat['Mois'] = df_résultat['Mois'].astype(int)
