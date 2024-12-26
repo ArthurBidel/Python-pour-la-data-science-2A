@@ -13,24 +13,12 @@ from scipy.signal import savgol_filter
 from pathlib import Path
 
 
-import matplotlib.dates as mdates
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import matplotlib.colors as colors
 from IPython.display import Image, display
 from shapely import wkt
-import geopandas as gpd
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-
-import matplotlib.pyplot as plt
-import geopandas as gpd
-import matplotlib.animation as animation
-from matplotlib import colors
-from IPython.display import Image, display
-import os
-from shapely import wkt 
 
 
 # Définir la charte graphique pour qu'elle soit uniforme entre les différentes stats descriptives (on veut que nos graphiques matchent avec nos cartes)
@@ -65,6 +53,8 @@ charte_graphique3 = {
     "Decret": "Pink",
     "Ordonnance": "Red",
 }
+
+all = ["Arrete", "Loi", "Decret", "Ordonnance"]
 
 #URL de téléchargement des contours départementaux
 url = "https://www.data.gouv.fr/fr/datasets/r/90b9341a-e1f7-4d75-a73c-bbc010c7feeb"
@@ -697,7 +687,56 @@ def get_mean(df, indicateur, date_comp):
     except IndexError:
         raise IndexError(f"Aucune donnée trouvée pour la date {date_comp} et l'indicateur '{indicateur}'.")
 
-
+def camembert(df):
+    """
+    Crée un diagramme camembert montrant la répartition des types de textes de loi.
+    
+    Parameters:
+    df (DataFrame): Le DataFrame contenant les données avec une colonne 'Nature'
+    """
+    # Définir les couleurs pour chaque type de texte
+    color_mapping = {
+        "ARRETE": "Green",
+        "LOI": "Cyan",
+        "DECRET": "Pink",
+        "ORDONNANCE": "Red"
+    }
+    
+    # Calculer les pourcentages pour chaque type de texte
+    type_counts = df['Nature'].value_counts()
+    percentages = (type_counts / len(df) * 100).round(1)
+    
+    # Créer la figure
+    plt.figure(figsize=(8, 6))
+    
+    # Attribuer les couleurs (gris par défaut si type non spécifié)
+    colors = [color_mapping.get(str(type_text).upper(), 'gray') for type_text in type_counts.index]
+    
+    # Créer le camembert
+    wedges, texts, autotexts = plt.pie(percentages, 
+                                      labels=type_counts.index,
+                                      colors=colors,
+                                      autopct='%1.1f%%',
+                                      pctdistance=0.85,
+                                      explode=[0.05] * len(type_counts))
+    
+    # Personnaliser l'apparence
+    plt.title("Répartition globale des types de textes de loi", fontsize=14, pad=20)
+    
+    # Personnaliser les textes
+    plt.setp(autotexts, size=10, weight='bold')
+    plt.setp(texts, size=10)
+    
+    # Ajouter une légende avec les counts absolus
+    legend_labels = [f"{index} ({count:,} textes)" for index, count in type_counts.items()]
+    plt.legend(wedges, legend_labels,
+              title="Types de textes",
+              loc="center left",
+              bbox_to_anchor=(1, 0, 0.5, 0.5))
+    
+    plt.tight_layout()
+    
+    return plt.gcf(), plt.gca()
 
 def tri_occurence(df):
     '''
