@@ -64,7 +64,6 @@ charte_graphique3 = {
     "Loi": "Cyan",
     "Decret": "Pink",
     "Ordonnance": "Red",
-    "Decision" : "Orange",
 }
 
 #URL de téléchargement des contours départementaux
@@ -726,7 +725,7 @@ def tri_occurence(df):
 
     # Suppression des lignes où 'Année' est 2222
     df_résultat.drop(df_résultat[df_résultat['Année'] == '2222'].index, inplace=True)
-    df_résultat.drop(df_résultat[df_résultat['Année'] == 2222].index, inplace=True)
+    df_résultat.drop(df_résultat[df_résultat['Année'] > 2022].index, inplace=True)
 
     df_résultat['day']=1
     df_résultat['Mois'] = df_résultat['Mois'].astype(int)
@@ -824,3 +823,30 @@ def filter_rows_with_keyword(df, keyword):
     """
     filtered_df = df[df['Titre'].str.contains(keyword, case=False, na=False)]
     return filtered_df
+
+keywords_laws = [
+    "vol", "infraction", "fraude", "victime", "menace", "crime", "trafic", "viol", 
+    "exécution", "violence", "dégradation", "corruption", "tir", "contravention", 
+    "peine", "contrefaçon", "délit", "procès-verbal", "escroquerie", "fraude fiscale", 
+    "garde à vue", "responsabilité pénale", "génocide", "harcèlement", "outrage", 
+    "attentat", "condamnation", "maltraitance", "dommages", "accident", "agression", 
+    "meurtre", "emprisonnement", "mutilation", "exploitation", "inculpation", 
+    "répression", "pillage", "racket", "intimidation", "usurpation", "abandon", 
+    "violence conjugale", "attentat terroriste", "légitime défense", "banditisme", 
+    "incendie criminel", "extorsion", "abus de pouvoir", "tentative de meurtre", 
+    "violence policière", "assassinat", "évasion", "assistance aux criminels", 
+    "falsification", "blanchiment", "punition", "récidive", "détournement", 
+    "menace terroriste", "armes", "violences urbaines", "enlèvement", 
+    "otage", "trahison"
+]
+
+
+def count_crime_keywords(df, column='Titre'):
+    if df.empty:
+        print("Le DataFrame est vide.")
+        return
+    
+    all_text = ' '.join(df[column].dropna()).lower()
+    word_counts = {word: all_text.count(word) for word in keywords_laws}
+    
+    return pd.DataFrame.from_dict(word_counts, orient='index', columns=['Fréquence']).sort_values(by='Fréquence', ascending=False)
