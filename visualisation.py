@@ -57,6 +57,16 @@ charte_graphique2 = {
     "Homicides": "Purples"
 }
 
+# Dictionnaire associant chaque indicateur (législatif) à une couleur spécifique
+charte_graphique3 = {
+    "Texte": "Magenta",
+    "Arrete": "Green",
+    "Loi": "Cyan",
+    "Decret": "Pink",
+    "Ordonnance": "Red",
+    "Decision" : "Orange",
+}
+
 #URL de téléchargement des contours départementaux
 url = "https://www.data.gouv.fr/fr/datasets/r/90b9341a-e1f7-4d75-a73c-bbc010c7feeb"
 contours_dpt = gpd.read_file(url)
@@ -735,3 +745,81 @@ def tri_occurence(df):
 
     return(df_sorted)
 
+def plot_histogram(df, types, charte_graphique=charte_graphique3):
+    """
+    Trace un histogramme empilé du nombre de textes par mois pour différents types de textes.
+    
+    Parameters:
+    df (DataFrame): Le DataFrame contenant les données.
+    types (list): Liste des types de textes à analyser (ex: ['LOI', 'DECRET']).
+    charte_graphique3 (dict): Dictionnaire des couleurs par type de texte.
+    """
+    if df.empty:
+        print("Il n'y a pas de donnée existante")
+        return
+        
+    # Filtrer les données par les types de texte
+    df_filtered = df[df['Indicateur'].isin(types)].copy()
+    
+    # S'assurer que la colonne 'Date' est de type datetime
+    df_filtered['Date'] = pd.to_datetime(df_filtered['Date'], errors='coerce')
+    
+    # Créer un pivot table pour avoir les données dans le format requis
+    df_pivot = df_filtered.pivot_table(
+        index='Date',
+        columns='Indicateur',
+        values='Nombre',
+        aggfunc='sum',
+        fill_value=0
+    )
+    
+    # Créer le graphique
+    fig, ax = plt.subplots(figsize=(15, 8))
+    
+    # Tracer l'histogramme empilé
+    bottom = np.zeros(len(df_pivot))
+    bars = []
+    
+    for type_texte in df_pivot.columns:
+        bars.append(
+            ax.bar(df_pivot.index, df_pivot[type_texte], 
+                  bottom=bottom, 
+                  width=20, 
+                  label=type_texte,
+                  color=charte_graphique[type_texte],
+                  alpha=0.7)
+        )
+        bottom += df_pivot[type_texte]
+    
+    # Ajouter des titres et des labels
+    ax.set_title(f"Répartition des textes par type : {', '.join(types)}", 
+                fontsize=14, pad=20)
+    ax.set_xlabel('Date', fontsize=12)
+    ax.set_ylabel('Nombre de textes', fontsize=12)
+    
+    # Ajouter une légende
+    ax.legend(title="Types de textes", 
+             bbox_to_anchor=(1.05, 1), 
+             loc='upper left')
+    
+    # Améliorer l'aspect du graphique
+    plt.xticks(rotation=45)
+    
+    # Ajuster automatiquement les marges pour éviter que la légende soit coupée
+    plt.tight_layout()
+    
+    return fig, ax
+
+def nb_lignes_traitant(df, keyword, column='Titre'):
+    """
+    Compte le nombre de lignes dans un DataFrame où un mot clé apparaît dans une colonne donnée.
+    """
+    mask = df[column].str.contains(keyword, case=False, na=False)
+    return mask.sum()
+
+def filter_rows_with_keyword(df, keyword):
+    """
+    Filtre les lignes d'un DataFrame où un mot clé apparaît dans une colonne donnée.
+    """
+    filtered_df = df[df['Titre'].str.contains(keyword, case=False, na=False)]
+    return filtered_df
