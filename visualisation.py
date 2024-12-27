@@ -130,6 +130,10 @@ def tracer_evolution_taux(
     # Appliquer une échelle logarithmique si demandé
     if use_log_scale:
         plt.yscale('log')
+    
+    # Désactiver les axes
+    plt.axis('equal')  
+    plt.gca().set_axis_off() 
 
     # Ajustement et affichage
     plt.tight_layout()
