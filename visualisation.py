@@ -762,10 +762,6 @@ def tri_occurrence(df):
     # Remplacer les NaN par 0 pour les colonnes ajoutées
     df_résultat.fillna(0, inplace=True)
 
-    # Suppression des lignes où 'Année' est 2222
-    df_résultat.drop(df_résultat[df_résultat['Année'] == '2222'].index, inplace=True)
-    df_résultat.drop(df_résultat[df_résultat['Année'] > 2022].index, inplace=True)
-
     df_résultat['day']=1
     df_résultat['Mois'] = df_résultat['Mois'].astype(int)
     df_résultat.rename(columns={'Mois': 'month'}, inplace=True) # Bizarre car le reste est en fr?
