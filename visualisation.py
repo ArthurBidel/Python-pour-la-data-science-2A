@@ -721,7 +721,7 @@ def camembert(df):
                                       explode=[0.05] * len(type_counts))
     
     # Personnaliser l'apparence
-    plt.title("Répartition globale des types de textes de loi", fontsize=14, pad=20)
+    plt.title("Figure 6 - Répartition globale des types de textes de loi (toutes années confondues)",fontsize=14, pad=20, x=0.5)
     
     # Personnaliser les textes
     plt.setp(autotexts, size=10, weight='bold')
@@ -731,14 +731,14 @@ def camembert(df):
     legend_labels = [f"{index} ({count:,} textes)" for index, count in type_counts.items()]
     plt.legend(wedges, legend_labels,
               title="Types de textes",
-              loc="center left",
-              bbox_to_anchor=(1, 0, 0.5, 0.5))
+              loc="lower right",
+              bbox_to_anchor=(1, 0, 0.5, 1))
     
     plt.tight_layout()
     
     return plt.gcf(), plt.gca()
 
-def tri_occurence(df):
+def tri_occurrence(df):
     '''
     Fonction récapitulative de tout le réagencement (que tu avais fait AnhLinh)
     '''
@@ -784,7 +784,7 @@ def tri_occurence(df):
 
     return(df_sorted)
 
-def plot_histogram(df, types, charte_graphique=charte_graphique3):
+def plot_histogram(df, types, charte_graphique=charte_graphique3, numero_figure ='Figure -'):
     """
     Trace un histogramme empilé du nombre de textes par mois pour différents types de textes.
     
@@ -831,7 +831,7 @@ def plot_histogram(df, types, charte_graphique=charte_graphique3):
         bottom += df_pivot[type_texte]
     
     # Ajouter des titres et des labels
-    ax.set_title(f"Répartition des textes par type : {', '.join(types)}", 
+    ax.set_title(f"{numero_figure}Répartition des textes par type : {', '.join(types)}", 
                 fontsize=14, pad=20)
     ax.set_xlabel('Date', fontsize=12)
     ax.set_ylabel('Nombre de textes', fontsize=12)
