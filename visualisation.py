@@ -735,6 +735,8 @@ def camembert(df):
               bbox_to_anchor=(1, 0, 0.5, 1))
     
     plt.tight_layout()
+
+    plt.show()
     
     return plt.gcf(), plt.gca()
 
@@ -843,6 +845,8 @@ def plot_histogram(df, types, charte_graphique=charte_graphique3, numero_figure 
     # Ajuster automatiquement les marges pour éviter que la légende soit coupée
     plt.tight_layout()
     
+    plt.show()
+
     return fig, ax
 
 def nb_lignes_traitant(df, keyword, column='Titre'):
