@@ -734,6 +734,10 @@ def camembert(df):
               loc="lower right",
               bbox_to_anchor=(1, 0, 0.5, 1))
     
+    # Désactiver les axes
+    plt.axis('equal')  
+    plt.gca().set_axis_off() 
+    
     plt.tight_layout()
 
     plt.show()
@@ -841,6 +845,10 @@ def plot_histogram(df, types, charte_graphique=charte_graphique3, numero_figure 
     
     # Améliorer l'aspect du graphique
     plt.xticks(rotation=45)
+
+    # Désactiver les axes
+    plt.axis('equal')  
+    plt.gca().set_axis_off() 
     
     # Ajuster automatiquement les marges pour éviter que la légende soit coupée
     plt.tight_layout()
