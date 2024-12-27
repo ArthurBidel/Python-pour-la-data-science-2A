@@ -1,0 +1,13 @@
+openpyxl
+requests
+lxml
+bs4
+geopandas
+pandas
+python-dotenv
+requests-oauthlib
+matplotlib
+statsmodels
+linearmodels
+seaborn
+numpy
