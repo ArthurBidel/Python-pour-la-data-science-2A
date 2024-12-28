@@ -644,21 +644,9 @@ def filter_rows_with_keyword(df, keyword): # UTILISE ?
     filtered_df = df[df['Titre'].str.contains(keyword, case=False, na=False)]
     return filtered_df
 
-keywords_laws = [
-    "vol", "infraction", "fraude", "victime", "menace", "crime", "trafic", "viol", 
-    "exécution", "violence", "dégradation", "corruption", "tir", "contravention", 
-    "peine", "contrefaçon", "délit", "procès-verbal", "escroquerie", "fraude fiscale", 
-    "garde à vue", "responsabilité pénale", "génocide", "harcèlement", "outrage", 
-    "attentat", "condamnation", "maltraitance", "dommages", "accident", "agression", 
-    "meurtre", "emprisonnement", "mutilation", "exploitation", "inculpation", 
-    "répression", "pillage", "racket", "intimidation", "usurpation", "abandon", 
-    "violence conjugale", "attentat terroriste", "légitime défense", "banditisme", 
-    "incendie criminel", "extorsion", "abus de pouvoir", "tentative de meurtre", 
-    "violence policière", "assassinat", "évasion", "assistance aux criminels", 
-    "falsification", "blanchiment", "punition", "récidive", "détournement", 
-    "menace terroriste", "armes", "violences urbaines", "enlèvement", 
-    "otage", "trahison"
-]
+keywords_laws = ["délinquance", "crime", "délit", "Homicides", "Vols", "Stupéfiants", "Escroquerie",
+                "Contrefaçon", "Sequestrations", "Recels", "Proxénétisme", "Menaces", "Cambriolages",
+                "infraction", "Attentats", "dégradations", "Outrages"]
 
 def count_crime_keywords(df, column='Titre'): # UTILISE ?
     """
