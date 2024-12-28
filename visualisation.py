@@ -615,25 +615,7 @@ def plot_histogram(df, types, numero_figure ='Figure -'):
     plt.tight_layout()
     plt.show()
 
-def nb_lignes_traitant(df, keyword, column='Titre'):
-    """
-    Compte le nombre de lignes dans un DataFrame où un mot clé apparaît dans une colonne donnée.
-
-    Args: 
-    df (DataFrame)
-    keyword: Mot clé qu'on recherche dans le titre
-    colum='Titre': Pour parcourir chacun des textes
-    """
-    mask = df[column].str.contains(keyword, case=False, na=False)
-    return mask.sum()
-
-
-
-
-
-# FONCTION EN ATTENTE DE SAVOIR SI UTILISEE
-
-def filter_rows_with_keyword(df, keyword): # UTILISE ?
+def filter_keyword(df, keyword): 
     """
     Filtre les lignes d'un DataFrame où un mot clé apparaît dans une colonne donnée.
 
@@ -644,23 +626,31 @@ def filter_rows_with_keyword(df, keyword): # UTILISE ?
     filtered_df = df[df['Titre'].str.contains(keyword, case=False, na=False)]
     return filtered_df
 
-keywords_laws = ["délinquance", "crime", "délit", "Homicides", "Vols", "Stupéfiants", "Escroquerie",
-                "Contrefaçon", "Sequestrations", "Recels", "Proxénétisme", "Menaces", "Cambriolages",
-                "infraction", "Attentats", "dégradations", "Outrages"]
+keywords = ["délinquance", "crime", "délit", "Homicide", "Vol", "Stupéfiant", "Escroquerie",
+                "Contrefaçon", "Sequestration", "Recel", "Proxénétisme", "Menace", "Cambriolage",
+                "infraction", "Attentat", "dégradation", "Outrage"]
 
-def count_crime_keywords(df, column='Titre'): # UTILISE ?
+def keywords_occ(df, keywords, column='Titre'):
     """
-    Idk what it doas help Wiwi
+    Crée un dictionnaire avec les mots-clés (sous forme regex) comme clés 
+    et leur nombre d'occurrences dans la colonne spécifiée comme valeurs.
+    
+    Args:
+        df: DataFrame contenant les données
+        keywords: Liste des mots-clés à rechercher
+        column: Nom de la colonne à analyser (par défaut 'Titre')
+    
+    Returns:
+        dict: Dictionnaire {regex_mot: nombre_occurrences}
     """
-    if df.empty:
-        print("Le DataFrame est vide.")
-        return
-    all_text = ' '.join(df[column].dropna()).lower()
-    word_counts = {word: all_text.count(word) for word in keywords_laws}
-    return pd.DataFrame.from_dict(word_counts, orient='index', columns=['Fréquence']).sort_values(by='Fréquence', ascending=False)
-
-
-
+    counts_dict = {}
+    
+    for word in keywords:
+        regex_pattern = fr"\b{word}s?\b"
+        count = int(df[column].str.contains(regex_pattern, case=False, na=False, regex=True).sum())
+        counts_dict[word] = count
+        
+    return counts_dict
 
 # FONCTION NON UTILISEE ANYMORE
 
