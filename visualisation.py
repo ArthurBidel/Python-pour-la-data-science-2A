@@ -48,10 +48,10 @@ charte_graphique2 = {
 # Charte graphique (légi)
 charte_graphique3 = {
     "Texte": "Magenta",
-    "Arrete": "darkslateblue",
-    "Loi": "steelblue",
-    "Decret": "teal",
-    "Ordonnance": "turquoise",
+    "Arrete": "#6A0DAD",
+    "Loi": "#1E90FF",
+    "Decret": "#228B22",
+    "Ordonnance": "#00CED1",
 }
 
 all = ["Arrete", "Loi", "Decret", "Ordonnance"]
