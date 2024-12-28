@@ -48,10 +48,10 @@ charte_graphique2 = {
 # Charte graphique (légi)
 charte_graphique3 = {
     "Texte": "Magenta",
-    "Arrete": "#6A0DAD",
-    "Loi": "#1E90FF",
-    "Decret": "#228B22",
-    "Ordonnance": "#00CED1",
+    "Arrete": "Green",
+    "Loi": "Cyan",
+    "Decret": "Pink",
+    "Ordonnance": "Red",
 }
 
 all = ["Arrete", "Loi", "Decret", "Ordonnance"]
@@ -489,10 +489,10 @@ def camembert(df):
     """
     # Définir les couleurs pour chaque type de texte
     color_mapping = {
-        "ARRETE": "darkslateblue",
-        "LOI": "steelblue",
-        "DECRET": "teal",
-        "ORDONNANCE": "turquoise"
+        "ARRETE": "Green",
+        "LOI": "Cyan",
+        "DECRET": "Pink",
+        "ORDONNANCE": "Red"
     }
     
     # Calculer les pourcentages pour chaque type de texte
