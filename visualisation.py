@@ -1,18 +1,23 @@
-#import zipfile
+# Gestion des fichiers et des chemins
 import os
+from pathlib import Path
+
+# Traitement des données
 import numpy as np
 import pandas as pd
-from pathlib import Path
 import geopandas as gpd
+
 # Visualisation
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+from matplotlib import colors, dates as mdates
 import seaborn as sns
-from matplotlib import animation, colors, dates as mdates
-from matplotlib.colors import LinearSegmentedColormap
-# Outils supplémentaires
-#import requests
-from scipy.signal import savgol_filter
 from IPython.display import Image, display
+
+# Outils supplémentaires
+import requests
+from scipy.signal import savgol_filter
+import s3fs
 
 
 # Charte graphique graphique (crimi)
@@ -81,7 +86,8 @@ def tracer_evolution_taux(
         df['Date'] = pd.to_datetime(df['Date'], errors='coerce')  
 
     for indicateur, couleur in charte_graphique.items():
-        filtre = df['Indicateur'] == indicateur    
+        # Filtre l'indicateur choisi
+        filtre = df['Indicateur'] == indicateur
         # Appliquer borne temporelle si demandé :
         if time_period != []:
             dates = df.loc[
@@ -94,26 +100,25 @@ def tracer_evolution_taux(
                 (df['Date'] <= pd.to_datetime(time_period[1])) & 
                 filtre, taux
             ]
-        else: 
-            # Si pas de borne temporelle :
+        else:
+            # Si pas de borne temporelle
             dates = df.loc[filtre, 'Date']
             valeurs = df.loc[filtre, taux]
         # Appliquer un lissage si demandé
         if smooth:
             valeurs = valeurs.rolling(window=window_size, center=True, min_periods=1).mean()
-        # Tracer la courbe
-        plt.plot(dates, valeurs, color=couleur, linewidth=0.8, label=indicateur)
 
+        plt.plot(dates, valeurs, color=couleur, linewidth=0.8, label=indicateur)
+    # Appliquer une échelle logarithmique si demandé
+    if use_log_scale:
+        plt.yscale('log')
+
+    # Affichage
     plt.title(title, fontsize=14)
     plt.xlabel(xlabel, fontsize=12)
     plt.ylabel(ylabel, fontsize=12)
     plt.legend(fontsize=10, loc='upper left', bbox_to_anchor=(1, 1))
     plt.grid(axis='y', linestyle='--', alpha=0.7)
-    # Appliquer une échelle logarithmique si demandé
-    if use_log_scale:
-        plt.yscale('log')
-    plt.axis('equal')  
-    plt.gca().set_axis_off() 
     plt.tight_layout()
     plt.show()
 
@@ -193,57 +198,6 @@ def boxplot_indicateur_par_saison(df, indicateur, title="Boxplot"):
     plt.xlabel('Saison')
     plt.ylabel('Taux (/10 000)')
     plt.show()
-
-def évolution_indicateur(df, indicateur): # PAS UTILISE 
-    """
-    Renvoit plusieurs carte de la France métropolitaine avec la répartition d'un certain indicateur pour chaque année.
-
-    Args:
-        df (pd.DataFrame): Doit contenir une colonne 'Indicateur'.
-        indicateur : Une des valeurs de la colonne en question.
-    """
-    cartes_par_ligne = 7
-    annees = df['Année'].unique()
-    annees = sorted(annees)
-    total_annees = len(annees)
-    lignes = (total_annees // cartes_par_ligne) + (1 if total_annees % cartes_par_ligne != 0 else 0)
-    fig, axes = plt.subplots(nrows=lignes, ncols=cartes_par_ligne, figsize=(12, lignes * 2))
-    axes = axes.flatten()
-    # Echelle partagée
-    taux_values = []
-
-    for idx, annee in enumerate(annees):
-        df_filtre = df[(df['Année'] == annee) & (df['Indicateur'] == indicateur)]
-        # Ajouter une colonne de géométrie avec le dictionnaire défini plus haut
-        df_filtre.loc[:, "geometry"] = df_filtre["Département"].map(dictionnaire_geo)
-        gdf = gpd.GeoDataFrame(df_filtre, geometry="geometry")
-        # Ajouter les valeurs des taux dans la liste pour l'échelle partagée
-        taux_values.extend(gdf['Taux (/10 000)'].dropna().tolist())
-
-        if not gdf.empty:
-            gdf.plot(column='Taux (/10 000)', cmap=charte_graphique2.get(f'{indicateur}'), ax=axes[idx], legend=False)
-            axes[idx].set_title(f"{annee}", fontsize=6)
-            axes[idx].axis("off")  
-            axes[idx].set_aspect(1.4)
-        else:
-            axes[idx].axis("off")
-
-    # Légende partagée
-    sm = plt.cm.ScalarMappable(cmap=charte_graphique2.get(f'{indicateur}'), norm=mpl.colors.Normalize(vmin=min(taux_values), vmax=max(taux_values)))
-    sm.set_array([])  
-    cbar = fig.colorbar(sm, 
-                        ax=axes[-1], 
-                        orientation='horizontal', 
-                        fraction=0.045, 
-                        pad=0.06, 
-                        label="Occurences pour \n 10 000 habitants")
-    axes[-1].axis("off") # Supprime le contour de la dernière case où la légende est placée
-
-    # Affichage et finalisation
-    fig.suptitle(f"{indicateur}", fontsize=13, fontweight='bold', y=0.68) # Titre commun
-    plt.subplots_adjust(hspace=0.1, bottom=0, top=0.6)  # Ajuste espacements
-    plt.show()
-
 
 def evolution_indicateur_animation(df, indicateur):
     """
@@ -424,7 +378,7 @@ def evolution_idf_animation(df, densite):
     gdf_idf = gpd.GeoDataFrame(df_idf, geometry='geometry')
     annees = sorted(df_idf['Année'].unique())
     vmin = df_idf[densite].min()
-    vmax = df_idf[densité].max()
+    vmax = df_idf[densite].max()
     # Préparer la figure et l'axe
     fig, ax = plt.subplots(figsize=(10, 8), dpi=200)
     # Configurer la colorbar une seule fois
@@ -458,7 +412,7 @@ def evolution_idf_animation(df, densite):
             edgecolor='0.8',
             linewidth=0.7
         )
-        ax.set_title(f"{densité} - {annee}", fontsize=14)
+        ax.set_title(f"{densite} - {annee}", fontsize=14)
         ax.axis("off")
         ax.set_aspect(1.4)
 
@@ -525,39 +479,6 @@ def get_increase(df, indicateur, date1, date2):
     except IndexError:
         raise IndexError(f"Les données pour 1996 ou 2022 sont manquantes dans le dataframe.")
 
-def get_mean(df, indicateur, date_comp): # PAS UTILISE
-    """
-    Calcule la moyenne du taux d'infraction pour l'indicateur et permet de la comparer avec le taux actuel.
-
-    Args :
-        df (pd.DataFrame): Le dataframe contenant les colonnes 'Date', 'Indicateur', et 'Taux (/10 000)'.
-        indicateur (str): Le libellé de l'indicateur à analyser.
-        date_comp (str): La date choisie pour calculer l'écart (au format 'YYYY-MM-DD').
-
-    Returns:
-        tuple: Moyenne du taux (float), taux à la date voulue (float), écart à la moyenne à la date choisie (float).
-    """
-    try:
-        indicateur_data = df[df['Indicateur'] == indicateur]
-        # Calcul de la moyenne
-        mean_taux = indicateur_data['Taux (/10 000)'].mean()
-        # Récupérer le taux à la date choisie
-        taux_date = indicateur_data.loc[
-            indicateur_data['Date'] == date_comp, 'Taux (/10 000)'
-        ].iloc[0]
-        # Calculer l'écart à la moyenne
-        ecart = taux_date - mean_taux
-        # Affichage
-        print(f"Nombre d'infractions pour 10 000 habitants moyen : {mean_taux}")
-        print(f"Nombre au {date_comp} : {taux_date}")
-        print(f"Différence : {ecart}")
-    
-    except KeyError:
-        raise KeyError("Assurez-vous que les colonnes 'Date', 'Indicateur', et 'Taux (/10 000)' sont présentes dans le dataframe.")
-
-    except IndexError:
-        raise IndexError(f"Aucune donnée trouvée pour la date {date_comp} et l'indicateur '{indicateur}'.")
-
 def camembert(df):
     """
     Crée un diagramme camembert montrant la répartition des types de textes de loi.
@@ -602,7 +523,6 @@ def camembert(df):
     plt.gca().set_axis_off() 
     plt.tight_layout()
     plt.show()
-    return plt.gcf(), plt.gca()
 
 def tri_occurrence(df):
     '''
@@ -644,15 +564,16 @@ def plot_histogram(df, types, numero_figure ='Figure -'):
     """
     Trace un histogramme empilé du nombre de textes par mois pour différents types de textes.
     
-    Args:
+    Parameters:
     df (DataFrame): Le DataFrame contenant les données.
     types (list): Liste des types de textes à analyser (ex: ['LOI', 'DECRET']).
+    charte_graphique3 (dict): Dictionnaire des couleurs par type de texte.
     numero_figure = Pour ajuster le titre
     """
+    # Préparation
     if df.empty:
         print("Il n'y a pas de donnée existante")
         return
-        
     df_filtered = df[df['Indicateur'].isin(types)].copy()
     df_filtered['Date'] = pd.to_datetime(df_filtered['Date'], errors='coerce')
     
@@ -666,7 +587,8 @@ def plot_histogram(df, types, numero_figure ='Figure -'):
     )
     
     fig, ax = plt.subplots(figsize=(15, 8))
-
+    
+    # Tracer l'histogramme empilé
     bottom = np.zeros(len(df_pivot))
     bars = []
     for type_texte in df_pivot.columns:
@@ -680,7 +602,7 @@ def plot_histogram(df, types, numero_figure ='Figure -'):
         )
         bottom += df_pivot[type_texte]
     
-    # Finalisation
+    # Apparence et affichage
     ax.set_title(f"{numero_figure}Répartition des textes par type : {', '.join(types)}", 
                 fontsize=14, pad=20)
     ax.set_xlabel('Date', fontsize=12)
@@ -689,11 +611,8 @@ def plot_histogram(df, types, numero_figure ='Figure -'):
              bbox_to_anchor=(1.05, 1), 
              loc='upper left')
     plt.xticks(rotation=45)
-    plt.axis('equal')  
-    plt.gca().set_axis_off() 
     plt.tight_layout()
     plt.show()
-    return fig, ax
 
 def nb_lignes_traitant(df, keyword, column='Titre'):
     """
@@ -707,7 +626,13 @@ def nb_lignes_traitant(df, keyword, column='Titre'):
     mask = df[column].str.contains(keyword, case=False, na=False)
     return mask.sum()
 
-def filter_rows_with_keyword(df, keyword):
+
+
+
+
+# FONCTION EN ATTENTE DE SAVOIR SI UTILISEE
+
+def filter_rows_with_keyword(df, keyword): # UTILISE ?
     """
     Filtre les lignes d'un DataFrame où un mot clé apparaît dans une colonne donnée.
 
@@ -734,7 +659,7 @@ keywords_laws = [
     "otage", "trahison"
 ]
 
-def count_crime_keywords(df, column='Titre'):
+def count_crime_keywords(df, column='Titre'): # UTILISE ?
     """
     Idk what it doas help Wiwi
     """
@@ -744,3 +669,91 @@ def count_crime_keywords(df, column='Titre'):
     all_text = ' '.join(df[column].dropna()).lower()
     word_counts = {word: all_text.count(word) for word in keywords_laws}
     return pd.DataFrame.from_dict(word_counts, orient='index', columns=['Fréquence']).sort_values(by='Fréquence', ascending=False)
+
+
+
+
+# FONCTION NON UTILISEE ANYMORE
+
+def get_mean(df, indicateur, date_comp): # PAS UTILISE
+    """
+    Calcule la moyenne du taux d'infraction pour l'indicateur et permet de la comparer avec le taux actuel.
+
+    Args :
+        df (pd.DataFrame): Le dataframe contenant les colonnes 'Date', 'Indicateur', et 'Taux (/10 000)'.
+        indicateur (str): Le libellé de l'indicateur à analyser.
+        date_comp (str): La date choisie pour calculer l'écart (au format 'YYYY-MM-DD').
+
+    Returns:
+        tuple: Moyenne du taux (float), taux à la date voulue (float), écart à la moyenne à la date choisie (float).
+    """
+    try:
+        indicateur_data = df[df['Indicateur'] == indicateur]
+        # Calcul de la moyenne
+        mean_taux = indicateur_data['Taux (/10 000)'].mean()
+        # Récupérer le taux à la date choisie
+        taux_date = indicateur_data.loc[
+            indicateur_data['Date'] == date_comp, 'Taux (/10 000)'
+        ].iloc[0]
+        # Calculer l'écart à la moyenne
+        ecart = taux_date - mean_taux
+        # Affichage
+        print(f"Nombre d'infractions pour 10 000 habitants moyen : {mean_taux}")
+        print(f"Nombre au {date_comp} : {taux_date}")
+        print(f"Différence : {ecart}")
+    
+    except KeyError:
+        raise KeyError("Assurez-vous que les colonnes 'Date', 'Indicateur', et 'Taux (/10 000)' sont présentes dans le dataframe.")
+
+    except IndexError:
+        raise IndexError(f"Aucune donnée trouvée pour la date {date_comp} et l'indicateur '{indicateur}'.")
+
+def évolution_indicateur(df, indicateur): # PAS UTILISE 
+    """
+    Renvoit plusieurs carte de la France métropolitaine avec la répartition d'un certain indicateur pour chaque année.
+
+    Args:
+        df (pd.DataFrame): Doit contenir une colonne 'Indicateur'.
+        indicateur : Une des valeurs de la colonne en question.
+    """
+    cartes_par_ligne = 7
+    annees = df['Année'].unique()
+    annees = sorted(annees)
+    total_annees = len(annees)
+    lignes = (total_annees // cartes_par_ligne) + (1 if total_annees % cartes_par_ligne != 0 else 0)
+    fig, axes = plt.subplots(nrows=lignes, ncols=cartes_par_ligne, figsize=(12, lignes * 2))
+    axes = axes.flatten()
+    # Echelle partagée
+    taux_values = []
+
+    for idx, annee in enumerate(annees):
+        df_filtre = df[(df['Année'] == annee) & (df['Indicateur'] == indicateur)]
+        # Ajouter une colonne de géométrie avec le dictionnaire défini plus haut
+        df_filtre.loc[:, "geometry"] = df_filtre["Département"].map(dictionnaire_geo)
+        gdf = gpd.GeoDataFrame(df_filtre, geometry="geometry")
+        # Ajouter les valeurs des taux dans la liste pour l'échelle partagée
+        taux_values.extend(gdf['Taux (/10 000)'].dropna().tolist())
+
+        if not gdf.empty:
+            gdf.plot(column='Taux (/10 000)', cmap=charte_graphique2.get(f'{indicateur}'), ax=axes[idx], legend=False)
+            axes[idx].set_title(f"{annee}", fontsize=6)
+            axes[idx].axis("off")  
+            axes[idx].set_aspect(1.4)
+        else:
+            axes[idx].axis("off")
+
+    # Légende partagée
+    sm = plt.cm.ScalarMappable(cmap=charte_graphique2.get(f'{indicateur}'), norm=mpl.colors.Normalize(vmin=min(taux_values), vmax=max(taux_values)))
+    sm.set_array([])  
+    cbar = fig.colorbar(sm, 
+                        ax=axes[-1], 
+                        orientation='horizontal', 
+                        fraction=0.045, 
+                        pad=0.06, 
+                        label="Occurences pour \n 10 000 habitants")
+    axes[-1].axis("off") # Supprime le contour de la dernière case où la légende est placée
+
+    # Affichage et finalisation
+    fig.suptitle(f"{indicateur}", fontsize=13, fontweight='bold', y=0.68) # Titre commun
+    plt.subplots_adjust(hspace=0.1, bottom=0, top=0.6)  # Ajuste espacements
+    plt.show()
