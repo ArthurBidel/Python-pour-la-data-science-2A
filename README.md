@@ -45,3 +45,5 @@ Le dossier **[data](./data/)** héberge une copie locale d'une partie des donné
 Dans le script **[visualisation](./visualisation/)**, plusieurs fonctions et structures (charte graphique, dictionnaire etc) sont implémentées. Ce choix de ne pas les inclure directement dans les notebooks vise à améliorer la clarté du code.
 
 Enfin, le fichier **[requirements](./requirements/)** permet à pip d'installer toutes les bibliothèques nécessaires pour préparer l'environnement au projet.
+
+Le fichier `main.ipynb` est cool
