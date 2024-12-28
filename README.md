@@ -14,11 +14,11 @@ Ce projet s'inscrit dans le débat récurrent autour de l'insécurité et de l'e
 
 ### Définitions <a class="anchor" id="section1"></a>
 
-Criminalité : Ensemble des actes délictueux ou criminels, incluant les crimes (meurtres, agressions, etc.) et les délits (vols, fraudes, etc.). La criminalité est généralement mesurée par le nombre d'infractions enregistrées sur une période donnée.
+<b>La criminalité<b> correspond à l'ensemble des actes délictueux ou criminels, incluant les crimes (meurtres, agressions, etc.) et les délits (vols, fraudes, etc.). La criminalité est généralement mesurée par le nombre d'infractions enregistrées sur une période donnée.
 
-Délinquance : Comportement illégal ou antisocial, souvent plus large que la criminalité, et inclut des actes qui ne sont pas nécessairement considérés comme des crimes graves, mais qui enfreignent néanmoins la loi. Elle englobe des actes tels que les vols, les agressions, ou des infractions mineures.
+<b>La délinquance</b> constitue tout comportement illégal ou antisocial, souvent plus large que la criminalité, et inclut des actes qui ne sont pas nécessairement considérés comme des crimes graves, mais qui enfreignent néanmoins la loi. Elle englobe des actes tels que les vols, les agressions, ou des infractions mineures.
 
-La _production législative_ désigne l'ensemble des activités liées à la création, à l'adoption et à la promulgation de lois et de règlements par les instances législatives d'un pays, principalement le Parlement. Cela inclut la rédaction des projets de loi, leur débat, leur modification et leur adoption par les représentants élus, ainsi que leur validation par l'exécutif. La production législative peut également englober les décrets, les arrêtés et autres actes réglementaires qui détaillent et précisent l'application des lois. Elle reflète l'évolution des priorités sociales, économiques et politiques d'un gouvernement.
+<b>La production législative<b> désigne l'ensemble des activités liées à la création, à l'adoption, la modification et à la promulgation de lois et de règlements par les instances législatives d'un pays. Dans notre analyse, la production législative réfère aux lois, mais aussi aux autres actes réglementaires qui détaillent et précisent l'application de celles-là comme les ordonnances, les décrets et les arrêtés. Cette activité législative reflète donc l'évolution des priorités sociales, économiques et politiques d'un gouvernement.
 
 ### Récupération des données <a class="anchor" id="section2"></a>
 
