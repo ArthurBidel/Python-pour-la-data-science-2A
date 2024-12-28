@@ -8,7 +8,7 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib import animation, colors, dates as mdates
-#from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.colors import LinearSegmentedColormap
 # Outils supplémentaires
 #import requests
 from scipy.signal import savgol_filter
@@ -247,7 +247,7 @@ def évolution_indicateur(df, indicateur): # PAS UTILISE
 
 def evolution_indicateur_animation(df, indicateur):
     """
-    Renvoit une carte animée de la France métropolitaine avec la répartition d'un certain indicateur pour chaque année.
+    Renvoit une carte animée de la France métropolitaine avec la répartition d'un certain indicateur de criminalité pour chaque année.
     Sauvegarde l'animation au format gif dans le dossier 'animations'.
 
     Args:
@@ -332,15 +332,19 @@ def create_custom_greys_cmap():
     ]
     return LinearSegmentedColormap.from_list("CustomGreys", colors)
 
-
 def animer_evolution_densite(df, colonne_densite):
+    """
+    Renvoit une carte animée de la France métropolitaine avec la densité pour chaque année.
+    Sauvegarde l'animation au format gif dans le dossier 'animations'.
 
+    Args:
+        df (pd.DataFrame): Le DateFrame contenant une colonne 'Densité'.
+        indicateur : Une des valeurs de la colonne en question.
+    """
+    # Préparation
+    custom_greys_cmap = create_custom_greys_cmap()
     plt.ioff()
-    
-    # Préparer la figure et l'axe
     fig, ax = plt.subplots(figsize=(10, 8))
-    
-    # Créer une liste des années disponibles dans le DataFrame
     annees = sorted(df['Année'].unique())
     
     # Fonction d'initialisation pour l'animation
@@ -354,40 +358,25 @@ def animer_evolution_densite(df, colonne_densite):
     def update(frame):
         ax.clear()
         annee = annees[frame]
-        
-        # Filtrer les données pour l'année en cours
         df_filtre = df[df['Année'] == annee].copy()
-        
-        # Ajouter les géométries depuis le dictionnaire
         df_filtre['geometry'] = df_filtre['Département'].map(dictionnaire_geo)
-        
-        # Créer un GeoDataFrame à partir du DataFrame filtré
         gdf = gpd.GeoDataFrame(df_filtre, geometry='geometry')
-        
-        # Vérifier si le GeoDataFrame n'est pas vide
         if not gdf.empty:
-            # Calculer les limites de couleur
             vmin = df[colonne_densite].min()
             vmax = df[colonne_densite].max()
-            
-            # Tracer la carte
             gdf.plot(column=colonne_densite, 
-                     cmap=custom_greys_cmap,  # Colormap générique
+                     cmap=custom_greys_cmap, 
                      ax=ax, 
                      legend=False,
                      vmin=vmin,
                      vmax=vmax,
                      edgecolor='0.8',
                      linewidth=0.5)
-            
-            # Titre de la carte
             ax.set_title(f"Densité de population - {annee}")
         else:
             print(f"Année {annee} : Aucune donnée disponible")
-        
         ax.axis("off")
         ax.set_aspect(1.4)  # Étirement vertical de la carte 
-        
         return []
     
     # Créer l'animation
@@ -395,169 +384,53 @@ def animer_evolution_densite(df, colonne_densite):
                                    update, 
                                    init_func=init,
                                    frames=len(annees), 
-                                   interval=500,  # 500 ms entre chaque frame
+                                   interval=500, 
                                    blit=False)
     
-    # Ajouter une barre de couleur
+    # Affichage, sauvegarde et présentation
     vmin = df[colonne_densite].min()
     vmax = df[colonne_densite].max()
     sm = plt.cm.ScalarMappable(cmap=custom_greys_cmap, norm=colors.Normalize(vmin=vmin, vmax=vmax))
     sm.set_array([])
     plt.colorbar(sm, ax=ax, orientation='horizontal', fraction=0.036, pad=0.1, label="Densité (hab/km²)")
     
-    # Sauvegarder l'animation au format GIF
-    os.makedirs('animations', exist_ok=True)  # Crée un dossier 'animations' s'il n'existe pas
-    
-    # Chemin de sauvegarde
+    os.makedirs('animations', exist_ok=True)
     save_path = f'animations/evolution_densite.gif'
-    
-    # Sauvegarde en GIF
     anim.save(save_path, writer='pillow', fps=2)
 
-    # Afficher l'animation
     display(Image(filename=save_path))
-    
     print(f"Animation sauvegardée dans {save_path}")
-    
     return anim
 
-def animer_evolution(df, colonne, indicateur=None, charte_graphique=None, cmap=None, label=None):
+def evolution_idf_animation(df, densite):
     """
-    Renvoie une carte animée de la France métropolitaine avec la répartition d'un certain indicateur pour chaque année.
+    Renvoit une carte animée de l'Ile-de-France avec la densité pour chaque année.
     Sauvegarde l'animation au format gif dans le dossier 'animations'.
 
     Args:
-        df (pd.DataFrame): Doit contenir une colonne 'Année' et une colonne pour l'indicateur (e.g. 'Taux (/10 000)', 'Densité').
-        colonne (str): Le nom de la colonne contenant les données à visualiser.
-        indicateur (str, optional): Indicateur à visualiser (pour le titre et la couleur). Par défaut, None.
-        charte_graphique (dict, optional): Dictionnaire contenant les couleurs pour chaque indicateur. Par défaut, None.
-        cmap (Colormap, optional): Colormap à utiliser pour l'animation. Par défaut, None.
-        label (str, optional): Label de la barre de couleur. Par défaut, None.
+        df (pd.DataFrame): Le DataFrame contenant la colonne de 'Densité'.
+        indicateur : Une des valeurs de la colonne en question.
     """
-    # Préparation
+    custom_greys_cmap = create_custom_greys_cmap()
     plt.ioff()
-    fig, ax = plt.subplots(figsize=(10, 8))
-    annees = sorted(df['Année'].unique())
-    
-    # Fonction d'initialisation pour l'animation
-    def init():
-        ax.clear()
-        ax.set_title(f"{indicateur if indicateur else 'Initialisation'}")
-        ax.axis("off")
-        return []
-    
-    # Fonction de mise à jour pour chaque frame de l'animation
-    def update(frame):
-        ax.clear()
-        annee = annees[frame]
-        
-        # Filtrer les données pour l'année en cours
-        df_filtre = df[df['Année'] == annee].copy()
-        
-        # Ajouter les géométries depuis le dictionnaire
-        df_filtre['geometry'] = df_filtre['Département'].map(dictionnaire_geo)
-        
-        # Créer un GeoDataFrame à partir du DataFrame filtré
-        gdf = gpd.GeoDataFrame(df_filtre, geometry='geometry')
-        
-        # Vérifier si le GeoDataFrame n'est pas vide
-        if not gdf.empty:
-            # Calculer les limites de couleur
-            vmin = df[colonne].min()
-            vmax = df[colonne].max()
-            
-            # Tracer la carte
-            gdf.plot(column=colonne, 
-                     cmap=cmap or charte_graphique.get(indicateur) if indicateur else 'viridis',  # Colormap générique ou celle de l'indicateur
-                     ax=ax, 
-                     legend=False,
-                     vmin=vmin,
-                     vmax=vmax,
-                     edgecolor='0.8',
-                     linewidth=0.7)
-            
-            # Titre de la carte
-            ax.set_title(f"{indicateur} - {annee}" if indicateur else f"Densité - {annee}")
-        else:
-            print(f"Année {annee} : Aucune donnée disponible")
-        
-        ax.axis("off")
-        ax.set_aspect(1.4)  # Étirement vertical de la carte 
-        return []
-    
-    # Créer l'animation
-    anim = animation.FuncAnimation(fig, 
-                                   update, 
-                                   init_func=init,
-                                   frames=len(annees), 
-                                   interval=500,  # 500 ms entre chaque frame
-                                   blit=False)
-    
-    # Ajouter une barre de couleur
-    vmin = df[colonne].min()
-    vmax = df[colonne].max()
-    sm = plt.cm.ScalarMappable(cmap=cmap or charte_graphique.get(indicateur) if indicateur else 'viridis', 
-                               norm=colors.Normalize(vmin=vmin, vmax=vmax))
-    sm.set_array([])
-    plt.colorbar(sm, ax=ax, orientation='horizontal', fraction=0.036, pad=0.1, label=label or colonne)
-    
-    # Sauvegarder l'animation au format GIF
-    os.makedirs('animations', exist_ok=True)  # Crée un dossier 'animations' s'il n'existe pas
-    
-    # Chemin de sauvegarde
-    save_path = f'animations/evolution_{indicateur.replace(" ", "_") if indicateur else "densite"}.gif'
-    
-    # Sauvegarde en GIF
-    anim.save(save_path, writer='pillow', fps=2)
-
-    # Afficher l'animation
-    display(Image(filename=save_path))
-    
-    print(f"Animation sauvegardée dans {save_path}")
-    
-    return anim
-
-
-
-
-def evolution_idf_animation(df, indicateur):
-    import os
-    from IPython.display import display, Image
-    from matplotlib import animation, colors
-    import geopandas as gpd
-    import matplotlib.pyplot as plt
-    
-    plt.ioff()
-    
-    # Filtrer pour l'Île-de-France (codes 75, 77, 78, 91, 92, 93, 94, 95)
     idf_codes = ['75', '77', '78', '91', '92', '93', '94', '95']
     df_idf = df[df['Département'].isin(idf_codes)].copy()
-    
-    # Ajouter la géométrie à partir du dictionnaire
     df_idf['geometry'] = df_idf['Département'].map(dictionnaire_geo)
-
     nom_departement = {
         '75': 'Paris', '77': 'Seine-et-Marne', '78': 'Yvelines', '91': 'Essonne', 
         '92': 'Hauts-de-Seine', '93': 'Seine-Saint-Denis', '94': 'Val-de-Marne', '95': 'Val-d\'Oise'
     }
     df_idf['Nom_Departement'] = df_idf['Département'].map(nom_departement)
-
     gdf_idf = gpd.GeoDataFrame(df_idf, geometry='geometry')
-    
-    # Créer une liste des années
     annees = sorted(df_idf['Année'].unique())
-
-    # Définir les limites des valeurs de densité pour la colorbar
-    vmin = df_idf[indicateur].min()
-    vmax = df_idf[indicateur].max()
-    
+    vmin = df_idf[densite].min()
+    vmax = df_idf[densité].max()
     # Préparer la figure et l'axe
     fig, ax = plt.subplots(figsize=(10, 8), dpi=200)
-
     # Configurer la colorbar une seule fois
     sm = plt.cm.ScalarMappable(cmap=custom_greys_cmap, norm=colors.Normalize(vmin=vmin, vmax=vmax))
     sm.set_array([])  # Nécessaire pour éviter les erreurs avec colorbar
-    cbar = fig.colorbar(sm, ax=ax, orientation='horizontal', label=f"{indicateur}")
+    cbar = fig.colorbar(sm, ax=ax, orientation='horizontal', label=f"{densite}")
     
     # Fonction d'initialisation pour l'animation
     def init():
@@ -570,27 +443,22 @@ def evolution_idf_animation(df, indicateur):
     def update(frame):
         ax.clear()
         annee = annees[frame]
-        
-        # Filtrer les données pour l'année en cours
+        # Filtre pour l'année
         gdf_frame = gdf_idf[gdf_idf['Année'] == annee]
-        
         # Définir les limites des axes pour centrer sur l'Île-de-France
         bounds = gdf_frame.total_bounds
         ax.set_xlim(bounds[0], bounds[2])
         ax.set_ylim(bounds[1], bounds[3])
         
-        # Tracer la carte
         gdf_frame.plot(
-            column=indicateur,
-            cmap=custom_greys_cmap,  # Utilisez une cmap adaptée
+            column=densite,
+            cmap=custom_greys_cmap, 
             ax=ax,
             legend=False,
             edgecolor='0.8',
             linewidth=0.7
         )
-        
-        # Ajouter le titre de l'année
-        ax.set_title(f"{indicateur} - {annee}", fontsize=14)
+        ax.set_title(f"{densité} - {annee}", fontsize=14)
         ax.axis("off")
         ax.set_aspect(1.4)
 
@@ -598,15 +466,13 @@ def evolution_idf_animation(df, indicateur):
         for _, row in gdf_frame.iterrows():
             # Récupérer le centroïde du département
             centroid = row['geometry'].centroid
-            # Ajouter le texte sans boîte blanche, en gris foncé et avec une police plus fine
             ax.text(
                 centroid.x, centroid.y, 
                 row['Nom_Departement'], 
                 ha='center', va='center', 
                 fontsize=8, color='#666666', 
                 fontweight='light',  
-            )
-        
+            ) 
         return []
     
     # Créer l'animation
@@ -619,17 +485,14 @@ def evolution_idf_animation(df, indicateur):
         blit=False
     )
     
-    # Sauvegarder l'animation au format GIF
+    # Sauvegarde et affichage
     os.makedirs('animations', exist_ok=True)
     save_path = 'animations/evolution_idf_densite.gif'
     anim.save(save_path, writer='pillow', fps=2)
     
-    # Afficher l'animation
     display(Image(filename=save_path))
     print(f"Animation sauvegardée dans {save_path}")
     return anim
-
-
 
 def get_increase(df, indicateur, date1, date2): 
     """
@@ -644,18 +507,16 @@ def get_increase(df, indicateur, date1, date2):
     Returns : L'évolution en pourcentage de l'indicateur
     """
     try:
-        # Avoir les extremum
+        # Extremum xtremum
         nombre_1996 = df.loc[
                         (df['Date'] == date1) & (df['Indicateur'] == indicateur), 'Taux (/10 000)'
                         ].iloc[0]
-
         nombre_2022 = df.loc[
                         (df['Date'] == date2) & (df['Indicateur'] == indicateur), 'Taux (/10 000)'
                         ].iloc[0]
-        
-        # Calculer l'évolution en pourcentage
+        # Calcul de l'évolution en %
         evolution = ((nombre_2022 - nombre_1996) / nombre_1996) * 100
-
+        # Affichage
         print(f" {indicateur} entre {date1} et {date2}: {evolution} %")
     
     except KeyError:
@@ -664,13 +525,11 @@ def get_increase(df, indicateur, date1, date2):
     except IndexError:
         raise IndexError(f"Les données pour 1996 ou 2022 sont manquantes dans le dataframe.")
 
-
-
-def get_mean(df, indicateur, date_comp):
+def get_mean(df, indicateur, date_comp): # PAS UTILISE
     """
     Calcule la moyenne du taux d'infraction pour l'indicateur et permet de la comparer avec le taux actuel.
 
-    Parameters:
+    Args :
         df (pd.DataFrame): Le dataframe contenant les colonnes 'Date', 'Indicateur', et 'Taux (/10 000)'.
         indicateur (str): Le libellé de l'indicateur à analyser.
         date_comp (str): La date choisie pour calculer l'écart (au format 'YYYY-MM-DD').
@@ -679,26 +538,23 @@ def get_mean(df, indicateur, date_comp):
         tuple: Moyenne du taux (float), taux à la date voulue (float), écart à la moyenne à la date choisie (float).
     """
     try:
-        # Filtrer les données pour l'indicateur donné
         indicateur_data = df[df['Indicateur'] == indicateur]
-        
-        # Calculer la moyenne du taux
+        # Calcul de la moyenne
         mean_taux = indicateur_data['Taux (/10 000)'].mean()
-        
         # Récupérer le taux à la date choisie
         taux_date = indicateur_data.loc[
             indicateur_data['Date'] == date_comp, 'Taux (/10 000)'
         ].iloc[0]
-        
         # Calculer l'écart à la moyenne
         ecart = taux_date - mean_taux
-        
+        # Affichage
         print(f"Nombre d'infractions pour 10 000 habitants moyen : {mean_taux}")
         print(f"Nombre au {date_comp} : {taux_date}")
         print(f"Différence : {ecart}")
     
     except KeyError:
         raise KeyError("Assurez-vous que les colonnes 'Date', 'Indicateur', et 'Taux (/10 000)' sont présentes dans le dataframe.")
+
     except IndexError:
         raise IndexError(f"Aucune donnée trouvée pour la date {date_comp} et l'indicateur '{indicateur}'.")
 
@@ -706,8 +562,8 @@ def camembert(df):
     """
     Crée un diagramme camembert montrant la répartition des types de textes de loi.
     
-    Parameters:
-    df (DataFrame): Le DataFrame contenant les données avec une colonne 'Nature'
+    Args:
+    df (DataFrame): Le DataFrame contenant les données avec une colonne 'Nature'.
     """
     # Définir les couleurs pour chaque type de texte
     color_mapping = {
@@ -720,14 +576,12 @@ def camembert(df):
     # Calculer les pourcentages pour chaque type de texte
     type_counts = df['Nature'].value_counts()
     percentages = (type_counts / len(df) * 100).round(1)
-    
-    # Créer la figure
+
     plt.figure(figsize=(8, 6))
     
     # Attribuer les couleurs (gris par défaut si type non spécifié)
     colors = [color_mapping.get(str(type_text).upper(), 'gray') for type_text in type_counts.index]
     
-    # Créer le camembert
     wedges, texts, autotexts = plt.pie(percentages, 
                                       labels=type_counts.index,
                                       colors=colors,
@@ -735,38 +589,30 @@ def camembert(df):
                                       pctdistance=0.85,
                                       explode=[0.05] * len(type_counts))
     
-    # Personnaliser l'apparence
+    # Affichage et apparence 
     plt.title("Figure 6 - Répartition globale des types de textes de loi (toutes années confondues)",fontsize=14, pad=20, x=0.5)
-    
-    # Personnaliser les textes
     plt.setp(autotexts, size=10, weight='bold')
     plt.setp(texts, size=10)
-    
-    # Ajouter une légende avec les counts absolus
     legend_labels = [f"{index} ({count:,} textes)" for index, count in type_counts.items()]
     plt.legend(wedges, legend_labels,
               title="Types de textes",
               loc="lower right",
               bbox_to_anchor=(1, 0, 0.5, 1))
-    
-    # Désactiver les axes
     plt.axis('equal')  
     plt.gca().set_axis_off() 
-    
     plt.tight_layout()
-
     plt.show()
-    
     return plt.gcf(), plt.gca()
 
 def tri_occurrence(df):
     '''
-    Fonction récapitulative de tout le réagencement (que tu avais fait AnhLinh)
+    Calcule le nombre de publication par mois pour chaque type de textes de loi.
+
+    Args: 
+    df: Le DateFrame contenant chacun des textes de lois et leur nature (df_loda ici)
     '''
     df_résultat = df.groupby(["Année", "Mois"]).size().reset_index(name="Texte")
-
     types = df['Nature'].unique()
-
     for type in types : 
         type_lower = type.capitalize()
         grouped_type = (df[df["Nature"] == type]
@@ -779,45 +625,35 @@ def tri_occurrence(df):
                                 how="left",
                                 on=["Année", "Mois"]
                             )
-
-    # Remplacer les NaN par 0 pour les colonnes ajoutées
-    df_résultat.fillna(0, inplace=True)
-
+    df_résultat.fillna(0, inplace=True) # Remplacer les NaN par 0 pour les colonnes ajoutées
     df_résultat['day']=1
     df_résultat['Mois'] = df_résultat['Mois'].astype(int)
-    df_résultat.rename(columns={'Mois': 'month'}, inplace=True) # Bizarre car le reste est en fr?
+    df_résultat.rename(columns={'Mois': 'month'}, inplace=True) # On renomme de cette manière pour pouvoir utiliser datetime
     df_résultat['Année'] = df_résultat['Année'].astype(int)
-    df_résultat.rename(columns={'Année': 'year'}, inplace=True) # Bizarre car le reste est en fr?
+    df_résultat.rename(columns={'Année': 'year'}, inplace=True) 
     df_résultat.head()
-
-
     df_résultat['Date'] = pd.to_datetime(df_résultat[['year', 'month', 'day']])
     df_res = df_résultat.melt(id_vars=['year', "month", 'day', 'Date'],
                       var_name='Indicateur',  
                       value_name='Nombre')  
-
     df_sorted = df_res.sort_values(by='Date').reset_index(drop=True)
     df_sorted['Cumulatif'] = df_sorted.groupby('Indicateur')['Nombre'].cumsum()
-
     return(df_sorted)
 
-def plot_histogram(df, types, charte_graphique=charte_graphique3, numero_figure ='Figure -'):
+def plot_histogram(df, types, numero_figure ='Figure -'):
     """
     Trace un histogramme empilé du nombre de textes par mois pour différents types de textes.
     
-    Parameters:
+    Args:
     df (DataFrame): Le DataFrame contenant les données.
     types (list): Liste des types de textes à analyser (ex: ['LOI', 'DECRET']).
-    charte_graphique3 (dict): Dictionnaire des couleurs par type de texte.
+    numero_figure = Pour ajuster le titre
     """
     if df.empty:
         print("Il n'y a pas de donnée existante")
         return
         
-    # Filtrer les données par les types de texte
     df_filtered = df[df['Indicateur'].isin(types)].copy()
-    
-    # S'assurer que la colonne 'Date' est de type datetime
     df_filtered['Date'] = pd.to_datetime(df_filtered['Date'], errors='coerce')
     
     # Créer un pivot table pour avoir les données dans le format requis
@@ -829,52 +665,44 @@ def plot_histogram(df, types, charte_graphique=charte_graphique3, numero_figure 
         fill_value=0
     )
     
-    # Créer le graphique
     fig, ax = plt.subplots(figsize=(15, 8))
-    
-    # Tracer l'histogramme empilé
+
     bottom = np.zeros(len(df_pivot))
     bars = []
-    
     for type_texte in df_pivot.columns:
         bars.append(
             ax.bar(df_pivot.index, df_pivot[type_texte], 
                   bottom=bottom, 
                   width=20, 
                   label=type_texte,
-                  color=charte_graphique[type_texte],
+                  color=charte_graphique3[type_texte],
                   alpha=0.7)
         )
         bottom += df_pivot[type_texte]
     
-    # Ajouter des titres et des labels
+    # Finalisation
     ax.set_title(f"{numero_figure}Répartition des textes par type : {', '.join(types)}", 
                 fontsize=14, pad=20)
     ax.set_xlabel('Date', fontsize=12)
     ax.set_ylabel('Nombre de textes', fontsize=12)
-    
-    # Ajouter une légende
     ax.legend(title="Types de textes", 
              bbox_to_anchor=(1.05, 1), 
              loc='upper left')
-    
-    # Améliorer l'aspect du graphique
     plt.xticks(rotation=45)
-
-    # Désactiver les axes
     plt.axis('equal')  
     plt.gca().set_axis_off() 
-    
-    # Ajuster automatiquement les marges pour éviter que la légende soit coupée
     plt.tight_layout()
-    
     plt.show()
-
     return fig, ax
 
 def nb_lignes_traitant(df, keyword, column='Titre'):
     """
     Compte le nombre de lignes dans un DataFrame où un mot clé apparaît dans une colonne donnée.
+
+    Args: 
+    df (DataFrame)
+    keyword: Mot clé qu'on recherche dans le titre
+    colum='Titre': Pour parcourir chacun des textes
     """
     mask = df[column].str.contains(keyword, case=False, na=False)
     return mask.sum()
@@ -882,6 +710,10 @@ def nb_lignes_traitant(df, keyword, column='Titre'):
 def filter_rows_with_keyword(df, keyword):
     """
     Filtre les lignes d'un DataFrame où un mot clé apparaît dans une colonne donnée.
+
+    Args:
+    df(DataFrame)
+    keyword : mot clé d'intérêt
     """
     filtered_df = df[df['Titre'].str.contains(keyword, case=False, na=False)]
     return filtered_df
@@ -902,13 +734,13 @@ keywords_laws = [
     "otage", "trahison"
 ]
 
-
 def count_crime_keywords(df, column='Titre'):
+    """
+    Idk what it doas help Wiwi
+    """
     if df.empty:
         print("Le DataFrame est vide.")
         return
-    
     all_text = ' '.join(df[column].dropna()).lower()
     word_counts = {word: all_text.count(word) for word in keywords_laws}
-    
     return pd.DataFrame.from_dict(word_counts, orient='index', columns=['Fréquence']).sort_values(by='Fréquence', ascending=False)
