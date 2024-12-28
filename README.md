@@ -34,16 +34,14 @@ Les données provenant de Légifrance ont été extraites à l'aide de l'API Pis
 
 ## Présentation du dépôt <a class="anchor" id="section3"></a>
 
-Notre production s'articule autour de deux déclinaisons du fichier. La première version **[main.ipynb](./main.ipynb)** présente le code uniquement accompagné de commentaires, sans exécution préalable, tandis que la seconde version **[main_executed.ipynb](./main_executed.ipynb)** propose un code déjà exécuté, ce qui permet d'afficher les résultats même en cas de problème d'accès aux bases de données.
+Notre production s'articule autour de deux déclinaisons du fichier. La première version `main.ipynb` présente le code uniquement accompagné de commentaires, sans exécution préalable, tandis que la seconde version `main_executed.ipynb` propose un code déjà exécuté, ce qui permet d'afficher les résultats même en cas de problème d'accès aux bases de données.
 
 La version exécutée fait office de livrable final.
 
-Les deux notebooks **[database_délinquance](./database_délinquance/)** et **[database_légifrance](./database_légifrance/)** présentent, respectivement, la récupération et le nettoyage des données relatives à la délinquance et à la production législative. Ils se concluent tous deux par le téléchargement des bases de données requises pour le bon fonctionnement du fichier principal.
+Les deux notebooks `database_délinquance.ipynb` et `database_légifrance.ipynb` présentent, respectivement, la récupération et le nettoyage des données relatives à la délinquance et à la production législative. Ils se concluent tous deux par le téléchargement des bases de données requises pour le bon fonctionnement du fichier principal.
 
-Le dossier **[data](./data/)** héberge une copie locale d'une partie des données extraites, notamment pour éviter d'avoir à exécuter les cellules en lien avec l'API Légifrance.
+Le dossier 'data' héberge une copie locale d'une partie des données extraites, notamment pour éviter d'avoir à exécuter les cellules en lien avec l'API Légifrance.
 
-Dans le script **[visualisation](./visualisation/)**, plusieurs fonctions et structures (charte graphique, dictionnaire etc) sont implémentées. Ce choix de ne pas les inclure directement dans les notebooks vise à améliorer la clarté du code.
+Dans le script `visualisation.py`, plusieurs fonctions et structures (charte graphique, dictionnaire etc) sont implémentées. Ce choix de ne pas les inclure directement dans les notebooks vise à améliorer la clarté du code.
 
-Enfin, le fichier **[requirements](./requirements/)** permet à pip d'installer toutes les bibliothèques nécessaires pour préparer l'environnement au projet.
-
-Le fichier `main.ipynb` est cool
+Enfin, le fichier `requirements.txt` permet à pip d'installer toutes les bibliothèques nécessaires pour préparer l'environnement au projet.
