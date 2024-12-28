@@ -1,4 +1,4 @@
-# Python-pour-la-data-science-2A
+# Etude des liens entre production législative et délinquance en France
 
 *Projet de William Olivier, Anh Linh Piketty et Arthur Bidel effectué dans le cadre du cours "Python pour la data science" au premier semestre de l'année 2024/2025*
 
@@ -8,16 +8,19 @@ Ce projet s'inscrit dans le débat récurrent autour de l'insécurité et de l'e
 
 ### Table des matières
 
-* [Récupération des données de Légifrance via une API](#section1)
-    * [Installation et importation des modules](#section11)
-    * [Requêtes sur l'API](#section12)
-    * [Travail sur les fichiers extraits](#section13)
-* [Nettoyage des données de Légifrance](#section2)
-* [Sauvegarde des tableaux de données finalisées](#section3)
+* [Définitions](#section1)
+* [Récupération des données](#section2)
+* [Présentation du dépôt](#section3)
 
-### Définitions
+### Définitions <a class="anchor" id="section1"></a>
 
-### Récupération des données
+Criminalité : Ensemble des actes délictueux ou criminels, incluant les crimes (meurtres, agressions, etc.) et les délits (vols, fraudes, etc.). La criminalité est généralement mesurée par le nombre d'infractions enregistrées sur une période donnée.
+
+Délinquance : Comportement illégal ou antisocial, souvent plus large que la criminalité, et inclut des actes qui ne sont pas nécessairement considérés comme des crimes graves, mais qui enfreignent néanmoins la loi. Elle englobe des actes tels que les vols, les agressions, ou des infractions mineures.
+
+La _production législative_ désigne l'ensemble des activités liées à la création, à l'adoption et à la promulgation de lois et de règlements par les instances législatives d'un pays, principalement le Parlement. Cela inclut la rédaction des projets de loi, leur débat, leur modification et leur adoption par les représentants élus, ainsi que leur validation par l'exécutif. La production législative peut également englober les décrets, les arrêtés et autres actes réglementaires qui détaillent et précisent l'application des lois. Elle reflète l'évolution des priorités sociales, économiques et politiques d'un gouvernement.
+
+### Récupération des données <a class="anchor" id="section2"></a>
 
 Notre travail s'appuie sur les sources suivantes :
 
@@ -28,11 +31,14 @@ INSEE – Données démographiques et indicateurs liés aux taux de pauvreté.
 
 Les données provenant de Légifrance ont été extraites à l'aide de l'API Piste, mise à disposition par les services publics.
 <span style="color:red;">**+ ajouter des infos liées aux scraping de wikipedia ?**</span>
-### Présentation du dépôt
+
+### Présentation du dépôt <a class="anchor" id="section3"></a>
 
 Notre production s'articule autour de deux déclinaisons du fichier. La première version **[main.ipynb](./main.ipynb)** présente le code uniquement accompagné de commentaires, sans exécution préalable, tandis que la seconde version **[main_executed.ipynb](./main_executed.ipynb)** propose un code déjà exécuté, ce qui permet d'afficher les résultats même en cas de problème d'accès aux bases de données.
 
 La version exécutée fait office de livrable final.
+
+Les deux notebooks **[database_délinquance/](./database_délinquance/)** et **[database_légifrance/](./database_légifrance/)** présentent, respectivement, la récupération et le nettoyage des données relatives à la délinquance et à la production législative. Ils se concluent tous deux par le téléchargement des bases de données requises pour le bon fonctionnement du fichier principal.
 
 Le dossier **[data/](./data/)** héberge une copie locale d'une partie des données extraites, notamment pour éviter d'avoir à exécuter les cellules en lien avec l'API Légifrance.
 
