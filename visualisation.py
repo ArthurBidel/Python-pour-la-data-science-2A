@@ -489,10 +489,10 @@ def camembert(df):
     """
     # Définir les couleurs pour chaque type de texte
     color_mapping = {
-        "ARRETE": "darkslateblue",
-        "LOI": "steelblue",
-        "DECRET": "teal",
-        "ORDONNANCE": "turquoise"
+        "ARRETE": "Green",
+        "LOI": "Cyan",
+        "DECRET": "Pink",
+        "ORDONNANCE": "Red"
     }
     
     # Calculer les pourcentages pour chaque type de texte
