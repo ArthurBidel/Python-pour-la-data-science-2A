@@ -652,6 +652,12 @@ def keywords_occ(df, keywords, column='Titre'):
         
     return counts_dict
 
+
+
+
+
+
+
 # FONCTION NON UTILISEE ANYMORE
 
 def get_mean(df, indicateur, date_comp): # PAS UTILISE
