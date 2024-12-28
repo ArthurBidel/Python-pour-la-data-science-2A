@@ -11,6 +11,7 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib import colors, dates as mdates
+from matplotlib.colors import LinearSegmentedColormap
 import seaborn as sns
 from IPython.display import Image, display
 
@@ -488,10 +489,10 @@ def camembert(df):
     """
     # Définir les couleurs pour chaque type de texte
     color_mapping = {
-        "ARRETE": "Green",
-        "LOI": "Cyan",
-        "DECRET": "Pink",
-        "ORDONNANCE": "Red"
+        "ARRETE": "darkslateblue",
+        "LOI": "steelblue",
+        "DECRET": "teal",
+        "ORDONNANCE": "turquoise"
     }
     
     # Calculer les pourcentages pour chaque type de texte
