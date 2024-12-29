@@ -22,17 +22,17 @@ La **législation sécuritaire** désigne ici un ensemble de textes de lois filt
 
 Notre travail s'appuie sur les sources suivantes :
 
-* Wikipédia – Informations sur la superficie des départements.
 * Légifrance – Données sur l'activité législative.
-* Ministère de l'Intérieur – Statistiques relatives à la délinquance et contours géographiques des départements.
+* Ministère de l'Intérieur – Statistiques relatives à la criminalité et contours géographiques des départements.
 * INSEE – Données démographiques et indicateurs liés aux taux de pauvreté.
+* Wikipédia – Superficies des départements 
 
 Les données provenant de Légifrance ont été extraites à l'aide de l'API Piste, mise à disposition par les services publics.
 <span style="color:red;">**+ ajouter des infos liées aux scraping de wikipedia ?**</span>
 
 ## Présentation du dépôt <a class="anchor" id="section3"></a>
 
-Notre travail s'articule principalement autour de deux déclinaisons du fichier. La première version `main.ipynb` présente le code uniquement accompagné de commentaires, sans exécution préalable, tandis que la seconde version `main_executed.ipynb` propose un code déjà exécuté, ce qui permet d'afficher les résultats même en cas de problème d'accès aux bases de données.
+Notre travail s'articule principalement autour de deux déclinaisons du fichier main. La première version `main.ipynb` présente le code uniquement accompagné de commentaires, sans exécution préalable, tandis que la seconde version `main_executed.ipynb` propose un code déjà exécuté, ce qui permet d'afficher les résultats même en cas de problème d'accès aux bases de données.
 
 La version exécutée fait office de livrable final.
 
@@ -40,8 +40,10 @@ Les deux notebooks `database_délinquance.ipynb` et `database_légifrance.ipynb`
 
 Un dernier notebook `annexes.ipynb` contient différents essais plus ou moins infructueux d'utilisation de l'API Légifrance. On a finit par choisir de se restreindre au fond LODA mais on a d'abord tenté de faire des recherches plus élargies ce qui a donné lieux à plusieurs démarches que nous trouvions dommage d'effacer.
 
-Le dossier 'data' héberge une copie locale d'une partie des données extraites, notamment pour pallier à d'éventuel problèmes de récupération des données que nous avions eu pendant la réalisation du projet.
+Le dossier `scripts.ipynb` héberge une copie locale d'une partie des données extraites, notamment pour pallier à d'éventuel problèmes de récupération des données que nous avions eu pendant la réalisation du projet.
 
-Dans le script `visualisation.py`, plusieurs fonctions et structures (charte graphique, dictionnaire etc) sont implémentées. Ce choix de ne pas les inclure directement dans les notebooks vise à améliorer la clarté du code.
+Le dossier `scripts` contient deux des fonctions et structures (charte graphique, dictionnaire etc) utilisées dans nos parties de statistiques descriptives et de modélisations. Nous les avons mises à part pour maintenir la lisibilité du main.
 
-Enfin, le fichier `requirements.txt` permet à pip d'installer toutes les bibliothèques nécessaires pour préparer l'environnement au projet.
+Le dossier `animations` héberge une sauvegarde de chacune des cartes animées affichées sur la main. Ces animations ne s'affichent pas sur github mais sont visualisables en ouvrant les fichiers correspondant au besoin.
+
+Enfin, le fichier `requirements.txt` est appelé par pip pour installer tous les packages utiles en début d'exécution.
