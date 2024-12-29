@@ -6,6 +6,8 @@ from statsmodels.api import add_constant
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import chi2
+import s3fs
+from scripts.visualisation import filter_keyword
 
 
 def regression(df, title, entity_effects=False, lag=False):
@@ -139,9 +141,10 @@ def Wald_test(FEM_results, Pooled_results):
         return("Pas d'évidence pour préférer FEM. Utilisez le modèle pooled OLS.")
 
 
+
 def regression_lags(df, title, entity_effects=False):
     """
-    Effectue des régressions avec des lags de 1 à 5 sur les articles,
+    Effectue des régressions avec des lags de 0 à 8 sur les articles,
     et retourne les p-values des coefficients de 'Articles_lag x' et le R² de chaque régression.
 
     Args:
@@ -168,9 +171,9 @@ def regression_lags(df, title, entity_effects=False):
         
     if not article_row.empty:
         p_value = float(article_row['pvalue'].values[0])  # Conversion directe
-        results_list.append(("Sans lag la p-value et le r_squared sont respectivement :", p_value, r_squared))
+        results_list.append({"Lag": 0, "P-Value": p_value, "R-Squared": r_squared})
 
-    for lag in range(1, 10):
+    for lag in range(1, 9):
         # Appel de la fonction existante pour chaque lag
         res = regression(df.copy(), title + f" (Lag {lag})", entity_effects, lag=lag)
         clear_output(wait=True)
@@ -187,7 +190,56 @@ def regression_lags(df, title, entity_effects=False):
         
         if not article_lag_row.empty:
             p_value = float(article_lag_row['pvalue'].values[0])  # Conversion directe
-            results_list.append(("Pour un lag de "+ str(lag) +" la p-value et le r_squared sont respectivement :", p_value, r_squared))
-
+            results_list.append({"Lag": lag, "P-Value": p_value, "R-Squared": r_squared})
+    results_df = pd.DataFrame(results_list)
     return results_list
 
+def mise_en_forme_reg(keyword, indicateur):
+    '''
+    Prépare un DataFrame structuré pour effectuer une analyse de régression.
+
+    Args:
+    keyword (str): Mot-clé utilisé pour filtrer les articles dans le DataFrame `df_loda`.
+    indicateur (str): Nom de l'indicateur de criminalité choisi.
+    
+    Returns: Un DataFrame contenant les données fusionnées et prêtes pour une analyse de régression.
+    '''
+
+    fs = s3fs.S3FileSystem(client_kwargs={"endpoint_url": "https://minio.lab.sspcloud.fr"})
+    MY_BUCKET = "anhlinh"
+
+    FILE_PATH_S3_DEP = f"{MY_BUCKET}/diffusion/df_indicateurs_dep.csv"
+    with fs.open(FILE_PATH_S3_DEP, "rb") as file_in_dep:
+        df_indicateurs_dep = pd.read_csv(file_in_dep)
+
+    FILE_PATH_S3_LODA = f"{MY_BUCKET}/diffusion/df_loda.csv"
+    with fs.open(FILE_PATH_S3_LODA, "rb") as file_in_loda:
+        df_loda = pd.read_csv(file_in_loda)
+
+    FILE_PATH_S3_NAT = f"{MY_BUCKET}/diffusion/df_indicateurs_nat.csv"
+    with fs.open(FILE_PATH_S3_NAT, "rb") as file_in_nat:
+        df_indicateurs_nat = pd.read_csv(file_in_nat)
+
+    
+    # Préparation de LODA
+    df_loda_reg = df_loda.drop([ "Unnamed: 0", "ID", "Date", "Nature", "Etat", "Origine", "Date Publication", "Mois"], axis = 1)
+    df_loda_filtre = filter_keyword(df_loda_reg,fr"\b{keyword}s?\b")
+    df_loda_reg_filtre = df_loda_filtre.groupby("Année").size().reset_index(name="Nombre d'articles")
+    
+    # Préparation du taux de pauvreté 
+    df_indicateurs_nat.head()
+    df_indicateurs_nat_reg = df_indicateurs_nat.loc[: ,["Année", "Taux de pauvreté (%)"]]
+    df_pauvrete_percent = df_indicateurs_nat_reg.drop_duplicates()
+
+    # Préparation des autres régresseurs et filtrage sur l'indicateur de criminalité choisi
+    df_indicateurs_reg = df_indicateurs_dep.drop([ "Unnamed: 0", "Superficie (km2)", "Nombre" , "Département"], axis = 1)
+    df_indicateurs_reg = df_indicateurs_reg[df_indicateurs_reg["Indicateur"] == indicateur]
+
+    df_pauvrete_loda_nbr= pd.merge(df_pauvrete_percent, df_loda_reg_filtre, on="Année", how="outer")
+    df_reg =pd.merge(df_pauvrete_loda_nbr, df_indicateurs_reg, on = "Année", how = "outer")
+
+    df_reg["Nombre d'articles"] = df_reg["Nombre d'articles"].fillna(0) # On remplace les valeurs manquante par 0
+    df_reg = df_reg.drop(["Indicateur"], axis = 1) # On se débarasse de la colonne 'Indicateur' sur laquelle on ne régresse pas
+    df_reg = df_reg.set_index(['Nom Département', 'Année']) # On met en index les colonnes qui indices nos variables
+
+    return(df_reg)
