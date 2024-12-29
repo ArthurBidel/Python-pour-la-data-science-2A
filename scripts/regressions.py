@@ -1,28 +1,29 @@
 from IPython.display import clear_output
 import pandas as pd
 from linearmodels.panel import PanelOLS
+import statsmodels.api as sm
+from statsmodels.api import add_constant
 import matplotlib.pyplot as plt
 import seaborn as sns
-import statsmodels.api as sm
 from scipy.stats import chi2
-from statsmodels.api import add_constant
 
 
-def regression(df, title, entity_effects=False, lag = False):
+def regression(df, title, entity_effects=False, lag=False):
 
     """
     Effectue une régression sur données de panel, affiche le résumé et trace le graphique.
     Si entity_effects=True, calcule également les effets fixes par département.
+    Si lag=int permet de faire la régression en appliquant un décalage temporel.
 
     Args:
         df (DataFrame): Le DataFrame contenant les données.
         title (str): Ajuster le titre du graphique.
         entity_effects (bool): Inclure ou non les effets fixes des entités (par défaut: False).
+        lag (False ou int): Inclure ou non un décalage.
 
     Returns:
         dict: Résultats de la régression, prédictions, résidus et, si applicable, effets fixes
     """
-
     if lag :
         # Création des variables décalées
         df["Articles_lag"+str(lag)] = df.groupby('Nom Département')["Nombre d'articles"].shift(lag)
@@ -39,8 +40,6 @@ def regression(df, title, entity_effects=False, lag = False):
 
         # Modèle de régression
         model = PanelOLS(y_lag, X_lag, entity_effects=entity_effects)
-
-
 
     else :
         # Définir les variables dépendante et explicatives
@@ -86,7 +85,6 @@ def regression(df, title, entity_effects=False, lag = False):
             color='red', 
             label='Prédictions'
         )
-
     else: 
         sns.scatterplot(        
         x=df["Nombre d'articles"], 
@@ -102,7 +100,6 @@ def regression(df, title, entity_effects=False, lag = False):
         label='Prédictions'
         )
 
-
     plt.title(title)
     plt.xlabel("Nombre d'articles")
     plt.ylabel("Nombre d'occurences pour 10 000 habitants")
@@ -117,6 +114,13 @@ def regression(df, title, entity_effects=False, lag = False):
     }
 
 def Wald_test(FEM_results, Pooled_results):
+    """
+    Effectue le test de Wald.
+
+    Args: 
+    FEM_results: Résultats de la régression avec effets fixes.
+    Pooled_results: Résultats de la régression sans effets fixes.
+    """
     # Statistique du Wald test : différence entre les log-vraisemblances
     wald_stat = 2 * (FEM_results["results"].loglik - Pooled_results["results"].loglik)
     n_entities = FEM_results["df_enriched"].index.get_level_values(0).nunique() 
@@ -136,7 +140,7 @@ def Wald_test(FEM_results, Pooled_results):
 
 def regression_lags(df, title, entity_effects=False):
     """
-    Effectue des régressions avec des lags de 1 à 5 sur les articles,
+    Effectue des régressions avec des lags de 1 à 10 sur les articles,
     et retourne les p-values des coefficients de 'Articles_lag x' et le R² de chaque régression.
 
     Args:
@@ -145,7 +149,7 @@ def regression_lags(df, title, entity_effects=False):
         entity_effects (bool): Inclure ou non les effets fixes des entités.
 
     Returns:
-        list: Liste de tuples (p-value de 'Articles_lag x', R²) pour x allant de 1 à 5.
+        list: Liste de tuples (p-value de 'Articles_lag x', R²) pour x allant de 1 à 10.
     """
     results_list = []
 
