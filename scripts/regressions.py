@@ -138,9 +138,10 @@ def Wald_test(FEM_results, Pooled_results):
     else:
         return("Pas d'évidence pour préférer FEM. Utilisez le modèle pooled OLS.")
 
+
 def regression_lags(df, title, entity_effects=False):
     """
-    Effectue des régressions avec des lags de 1 à 10 sur les articles,
+    Effectue des régressions avec des lags de 1 à 5 sur les articles,
     et retourne les p-values des coefficients de 'Articles_lag x' et le R² de chaque régression.
 
     Args:
@@ -149,9 +150,25 @@ def regression_lags(df, title, entity_effects=False):
         entity_effects (bool): Inclure ou non les effets fixes des entités.
 
     Returns:
-        list: Liste de tuples (p-value de 'Articles_lag x', R²) pour x allant de 1 à 10.
+        list: Liste de tuples (p-value de 'Articles_lag x', R²) pour x allant de 1 à 5.
     """
     results_list = []
+
+    res = regression(df.copy(), title, entity_effects)
+    clear_output(wait=True)
+    r_squared = float(res['results'].rsquared)  # Conversion en float
+        
+    # Extraction des coefficients sous forme de DataFrame
+    summary_df = res['results'].params.to_frame(name='coef')
+    summary_df['pvalue'] = res['results'].pvalues
+    summary_df['stderr'] = res['results'].std_errors
+    
+    # Filtrer pour obtenir 'Articles_lag x'
+    article_row = summary_df.filter(like=f"Nombre d'articles", axis=0)
+        
+    if not article_row.empty:
+        p_value = float(article_row['pvalue'].values[0])  # Conversion directe
+        results_list.append(("Sans lag la p-value et le r_squared sont respectivement :", p_value, r_squared))
 
     for lag in range(1, 10):
         # Appel de la fonction existante pour chaque lag
@@ -170,6 +187,7 @@ def regression_lags(df, title, entity_effects=False):
         
         if not article_lag_row.empty:
             p_value = float(article_lag_row['pvalue'].values[0])  # Conversion directe
-            results_list.append((p_value, r_squared))
+            results_list.append(("Pour un lag de "+ str(lag) +" la p-value et le r_squared sont respectivement :", p_value, r_squared))
 
     return results_list
+
