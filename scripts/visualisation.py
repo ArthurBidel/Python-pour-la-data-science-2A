@@ -490,6 +490,7 @@ def camembert(df):
     Args:
     df (DataFrame): Le DataFrame contenant les données avec une colonne 'Nature'.
     """
+    plt.close('all') 
     # Définir les couleurs pour chaque type de texte
     color_mapping = {
         "ARRETE": "Green",
