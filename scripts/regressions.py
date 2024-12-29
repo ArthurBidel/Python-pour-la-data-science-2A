@@ -168,7 +168,7 @@ def Wald_test(FEM_results, Pooled_results):
         return("Le modèle FEM est statistiquement significatif. Utilisez FEM.")
     else:
         return("Pas d'évidence pour préférer FEM. Utilisez le modèle pooled OLS.")
-        
+
 def regression_lags(df, title, entity_effects=False):
     """
     Effectue des régressions avec des lags de 1 à 5 sur les articles,
@@ -184,7 +184,7 @@ def regression_lags(df, title, entity_effects=False):
     """
     results_list = []
 
-    for lag in range(1, 6):
+    for lag in range(1, 10):
         # Appel de la fonction existante pour chaque lag
         res = regression(df.copy(), title + f" (Lag {lag})", entity_effects, lag=lag)
         clear_output(wait=True)
