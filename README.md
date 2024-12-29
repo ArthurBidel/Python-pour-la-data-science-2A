@@ -28,7 +28,6 @@ Notre travail s'appuie sur les sources suivantes :
 * Wikipédia – Superficies des départements 
 
 Les données provenant de Légifrance ont été extraites à l'aide de l'API Piste, mise à disposition par les services publics.
-<span style="color:red;">**+ ajouter des infos liées aux scraping de wikipedia ?**</span>
 
 ## Présentation du dépôt <a class="anchor" id="section3"></a>
 
@@ -40,10 +39,10 @@ Les deux notebooks `database_délinquance.ipynb` et `database_légifrance.ipynb`
 
 Un dernier notebook `annexes.ipynb` contient différents essais plus ou moins infructueux d'utilisation de l'API Légifrance. On a finit par choisir de se restreindre au fond LODA mais on a d'abord tenté de faire des recherches plus élargies ce qui a donné lieux à plusieurs démarches que nous trouvions dommage d'effacer.
 
-Le dossier `scripts.ipynb` héberge une copie locale d'une partie des données extraites, notamment pour pallier à d'éventuel problèmes de récupération des données que nous avions eu pendant la réalisation du projet.
+Le dossier `data` héberge une copie locale d'une partie des données extraites, notamment pour pallier à d'éventuel problèmes de récupération des données que nous avions eu pendant la réalisation du projet.
 
 Le dossier `scripts` contient deux des fonctions et structures (charte graphique, dictionnaire etc) utilisées dans nos parties de statistiques descriptives et de modélisations. Nous les avons mises à part pour maintenir la lisibilité du main.
 
-Le dossier `animations` héberge une sauvegarde de chacune des cartes animées affichées sur la main. Ces animations ne s'affichent pas sur github mais sont visualisables en ouvrant les fichiers correspondant au besoin.
+Le dossier `animations` héberge une sauvegarde de chacune des cartes animées affichées sur le notebook principal. Ces animations ne s'affichent pas sur github mais sont visualisables en ouvrant les fichiers correspondant au besoin.
 
 Enfin, le fichier `requirements.txt` est appelé par pip pour installer tous les packages utiles en début d'exécution.
