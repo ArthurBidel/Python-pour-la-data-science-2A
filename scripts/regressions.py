@@ -55,9 +55,6 @@ def regression(df, title, entity_effects=False, lag = False):
     df['Predicted'] = results.predict().fitted_values
     df['Residuals'] = df['Taux (/10 000)'] - df['Predicted']
 
-    # Afficher le résumé
-    print(results.summary)
-
     # Calcul des effets fixes si demandé
     if entity_effects:
         try:
