@@ -142,9 +142,12 @@ def Wald_test(FEM_results, Pooled_results):
 
 
 
+from IPython.display import clear_output
+import pandas as pd
+
 def regression_lags(df, title, entity_effects=False):
     """
-    Effectue des régressions avec des lags de 0 à 8 sur les articles,
+    Effectue des régressions avec des lags de 1 à 8 sur les articles,
     et retourne les p-values des coefficients de 'Articles_lag x' et le R² de chaque régression.
 
     Args:
@@ -153,26 +156,28 @@ def regression_lags(df, title, entity_effects=False):
         entity_effects (bool): Inclure ou non les effets fixes des entités.
 
     Returns:
-        list: Liste de tuples (p-value de 'Articles_lag x', R²) pour x allant de 1 à 5.
+        DataFrame: Un DataFrame contenant les résultats avec les colonnes 'Lag', 'P-Value', 'R-Squared'.
     """
     results_list = []
 
+    # Régression sans lag
     res = regression(df.copy(), title, entity_effects)
     clear_output(wait=True)
     r_squared = float(res['results'].rsquared)  # Conversion en float
-        
+    
     # Extraction des coefficients sous forme de DataFrame
     summary_df = res['results'].params.to_frame(name='coef')
     summary_df['pvalue'] = res['results'].pvalues
     summary_df['stderr'] = res['results'].std_errors
     
-    # Filtrer pour obtenir 'Articles_lag x'
+    # Filtrer pour obtenir 'Nombre d\'articles'
     article_row = summary_df.filter(like=f"Nombre d'articles", axis=0)
-        
+    
     if not article_row.empty:
         p_value = float(article_row['pvalue'].values[0])  # Conversion directe
         results_list.append({"Lag": 0, "P-Value": p_value, "R-Squared": r_squared})
 
+    # Régressions avec des lags
     for lag in range(1, 9):
         # Appel de la fonction existante pour chaque lag
         res = regression(df.copy(), title + f" (Lag {lag})", entity_effects, lag=lag)
@@ -191,8 +196,11 @@ def regression_lags(df, title, entity_effects=False):
         if not article_lag_row.empty:
             p_value = float(article_lag_row['pvalue'].values[0])  # Conversion directe
             results_list.append({"Lag": lag, "P-Value": p_value, "R-Squared": r_squared})
+
+    # Convertir la liste de dictionnaires en DataFrame
     results_df = pd.DataFrame(results_list)
-    return results_list
+    return results_df
+
 
 def mise_en_forme_reg(keyword, indicateur):
     '''
