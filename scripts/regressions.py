@@ -7,38 +7,6 @@ import statsmodels.api as sm
 from scipy.stats import chi2
 from statsmodels.api import add_constant
 
-def mise_en_forme_reg(keyword, indicateur):
-    '''
-    Prépare un DataFrame structuré pour effectuer une analyse de régression.
-
-    Args:
-    keyword (str): Mot-clé utilisé pour filtrer les articles dans le DataFrame `df_loda`.
-    indicateur (str): Nom de l'indicateur de criminalité choisi.
-    
-    Returns: Un DataFrame contenant les données fusionnées et prêtes pour une analyse de régression.
-    '''
-    # Préparation de LODA
-    df_loda_reg = df_loda.drop([ "Unnamed: 0", "ID", "Date", "Nature", "Etat", "Origine", "Date Publication", "Mois"], axis = 1)
-    df_loda_filtre = filter_keyword(df_loda_reg,fr"\b{keyword}s?\b")
-    df_loda_reg_filtre = df_loda_filtre.groupby("Année").size().reset_index(name="Nombre d'articles")
-    
-    # Préparation du taux de pauvreté 
-    df_indicateurs_nat.head()
-    df_indicateurs_nat_reg = df_indicateurs_nat.loc[: ,["Année", "Taux de pauvreté (%)"]]
-    df_pauvrete_percent = df_indicateurs_nat_reg.drop_duplicates()
-
-    # Préparation des autres régresseurs et filtrage sur l'indicateur de criminalité choisi
-    df_indicateurs_reg = df_indicateurs_dep.drop([ "Unnamed: 0", "Superficie (km2)", "Nombre" , "Département"], axis = 1)
-    df_indicateurs_reg = df_indicateurs_reg[df_indicateurs_reg["Indicateur"] == indicateur]
-
-    df_pauvrete_loda_nbr= pd.merge(df_pauvrete_percent, df_loda_reg_filtre, on="Année", how="outer")
-    df_reg =pd.merge(df_pauvrete_loda_nbr, df_indicateurs_reg, on = "Année", how = "outer")
-
-    df_reg["Nombre d'articles"] = df_reg["Nombre d'articles"].fillna(0) # On remplace les valeurs manquante par 0
-    df_reg = df_reg.drop(["Indicateur"], axis = 1) # On se débarasse de la colonne 'Indicateur' sur laquelle on ne régresse pas
-    df_reg = df_reg.set_index(['Nom Département', 'Année']) # On met en index les colonnes qui indices nos variables
-
-    return(df_reg)
 
 def regression(df, title, entity_effects=False, lag = False):
 
